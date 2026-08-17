@@ -14,6 +14,15 @@ public static class Program
     [STAThread]
     private static void Main(string[] args)
     {
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            try
+            {
+                File.AppendAllText(@"C:\Tools\airtun\crash.log", $"{DateTime.Now} [AppDomain.UnhandledException]: {e.ExceptionObject}\n");
+            }
+            catch { }
+        };
+
         try
         {
             SetDllDirectory(AppContext.BaseDirectory);
@@ -28,12 +37,9 @@ public static class Program
         }
         catch (Exception ex)
         {
-            var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AirTun", "crash.log");
             try
             {
-                var dir = Path.GetDirectoryName(logPath);
-                if (dir is not null && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                File.WriteAllText(logPath, $"{DateTime.Now}: {ex}");
+                File.AppendAllText(@"C:\Tools\airtun\crash.log", $"{DateTime.Now} [Main Exception]: {ex}\n");
             }
             catch { }
         }

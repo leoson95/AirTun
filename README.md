@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="branding/logo-with-text.png" width="170" alt="AirTun Logo" />
+
 # ⚡ AirTun (ایر‌تون)
 ### Ultra-Fast, Low-Latency Phone Internet Sharing for Windows
 **اشتراک‌گذاری پرسرعت، پایدار و بدون مرز اینترنت گوشی با ویندوز**

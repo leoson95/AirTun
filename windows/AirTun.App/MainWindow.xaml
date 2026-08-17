@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid x:Name="Root" Background="{StaticResource WindowSolidBrush}">
+    <Grid x:Name="Root" Background="Transparent">
         <Grid.RowDefinitions>
             <RowDefinition Height="44" />
             <RowDefinition Height="*" />
@@ -38,7 +38,7 @@
 
             <!-- TAB 1: CONNECT -->
             <ScrollViewer x:Name="ViewTabConnect" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Visible">
-                <StackPanel Spacing="18">
+                <StackPanel Spacing="16">
 
                     <!-- Status Hero Banner -->
                     <Border Background="{StaticResource FillSecondary}" CornerRadius="16" Padding="18,14" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
@@ -53,7 +53,7 @@
                     </Border>
 
                     <!-- IDLE & DISCOVERY STATE -->
-                    <StackPanel x:Name="PanelIdle" Spacing="18">
+                    <StackPanel x:Name="PanelIdle" Spacing="16">
 
                         <!-- Mode Selector Segmented Cards -->
                         <Grid ColumnSpacing="14">
@@ -110,9 +110,9 @@
                     </StackPanel>
 
                     <!-- CONNECTED ACTIVE STATE -->
-                    <StackPanel x:Name="PanelConnected" Spacing="18" Visibility="Collapsed">
-                        <Border Background="{StaticResource FillSecondary}" CornerRadius="20" Padding="22" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5">
-                            <StackPanel Spacing="16">
+                    <StackPanel x:Name="PanelConnected" Spacing="14" Visibility="Collapsed">
+                        <Border Background="{StaticResource FillSecondary}" CornerRadius="20" Padding="20" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5">
+                            <StackPanel Spacing="14">
                                 <!-- Endpoint & Badge -->
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -120,8 +120,8 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Grid.Column="0" Spacing="3">
-                                        <TextBlock x:Name="TextConnectedDevice" Text="Connected to Phone" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
-                                        <TextBlock x:Name="TextConnectedEndpoint" Text="192.168.43.1:10808 (TUN Mode)" FontSize="14" FontFamily="{StaticResource FontMono}" Foreground="{StaticResource LabelSecondary}" />
+                                        <TextBlock x:Name="TextConnectedDevice" Text="Connected to Phone" FontSize="22" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                        <TextBlock x:Name="TextConnectedEndpoint" Text="192.168.43.1:10808 (TUN Mode)" FontSize="13.5" FontFamily="{StaticResource FontMono}" Foreground="{StaticResource LabelSecondary}" />
                                     </StackPanel>
                                     <Border Grid.Column="1" Background="{StaticResource FillTertiary}" CornerRadius="8" Padding="12,5" VerticalAlignment="Center">
                                         <TextBlock Text="● ACTIVE" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
@@ -129,57 +129,90 @@
                                 </Grid>
 
                                 <!-- Outbound IP & Location -->
-                                <Border Background="{StaticResource FillSunken}" CornerRadius="14" Padding="16">
+                                <Border Background="{StaticResource FillSunken}" CornerRadius="14" Padding="14">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0" Spacing="4">
-                                            <TextBlock x:Name="TextGeoLocation" Text="🌐 Resolving location..." FontSize="17" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
-                                            <TextBlock x:Name="TextGeoIsp" Text="Detecting public IP &amp; ISP..." FontSize="14" Foreground="{StaticResource LabelSecondary}" />
+                                        <StackPanel Grid.Column="0" Spacing="3">
+                                            <TextBlock x:Name="TextGeoLocation" Text="🌐 Resolving location..." FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                                            <TextBlock x:Name="TextGeoIsp" Text="Detecting public IP &amp; ISP..." FontSize="13.5" Foreground="{StaticResource LabelSecondary}" />
                                         </StackPanel>
-                                        <Button Grid.Column="1" x:Name="BtnRefreshGeo" Content="🔄" Padding="10,4" Height="38" MinHeight="38" FontSize="16" Style="{StaticResource QuietButton}" Click="BtnRefreshGeo_Click" ToolTipService.ToolTip="Refresh Location &amp; IP" />
+                                        <Button Grid.Column="1" x:Name="BtnRefreshGeo" Content="🔄" Padding="10,4" Height="36" MinHeight="36" FontSize="15" Style="{StaticResource QuietButton}" Click="BtnRefreshGeo_Click" ToolTipService.ToolTip="Refresh Location &amp; IP" />
                                     </Grid>
                                 </Border>
 
+                                <!-- LIVE TRAFFIC WAVEFORM / GRAPH -->
+                                <Border Background="{StaticResource FillSunken}" CornerRadius="16" Padding="16,12">
+                                    <StackPanel Spacing="8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                                                <TextBlock x:Name="TextLiveTrafficHeader" Text="Live Network Waveform" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
+                                                <Border Background="{StaticResource FillTertiary}" CornerRadius="6" Padding="6,2" VerticalAlignment="Center">
+                                                    <TextBlock x:Name="TextPeakSpeed" Text="Peak: 0 KB/s" FontSize="11.5" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
+                                                </Border>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <Ellipse Width="8" Height="8" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Down" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
+                                                </StackPanel>
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <Ellipse Width="8" Height="8" Fill="#FF38BDF8" VerticalAlignment="Center" />
+                                                    <TextBlock Text="Up" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Grid>
+
+                                        <!-- Canvas Graph Container -->
+                                        <Border Height="80" Background="{StaticResource FillSecondary}" CornerRadius="10" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                                            <Canvas x:Name="CanvasTrafficGraph" Height="80" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                                        </Border>
+                                    </StackPanel>
+                                </Border>
+
                                 <!-- Live Speed Gauges -->
-                                <Grid ColumnSpacing="14">
+                                <Grid ColumnSpacing="12">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <Border Grid.Column="0" Background="{StaticResource FillSunken}" CornerRadius="16" Padding="16">
-                                        <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                            <TextBlock Text="↓ Download Rate" FontSize="14" Foreground="{StaticResource LabelSecondary}" />
-                                            <TextBlock x:Name="TextDownSpeed" Text="0 KB/s" FontSize="26" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
-                                            <TextBlock x:Name="TextDownTotal" Text="Total: 0 MB" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" />
+                                    <Border Grid.Column="0" Background="{StaticResource FillSunken}" CornerRadius="14" Padding="14">
+                                        <StackPanel HorizontalAlignment="Center" Spacing="3">
+                                            <TextBlock Text="↓ Download Rate" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" />
+                                            <TextBlock x:Name="TextDownSpeed" Text="0 KB/s" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                            <TextBlock x:Name="TextDownTotal" Text="Total: 0 MB" FontSize="13" Foreground="{StaticResource LabelSecondary}" />
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="16" Padding="16">
-                                        <StackPanel HorizontalAlignment="Center" Spacing="4">
-                                            <TextBlock Text="↑ Upload Rate" FontSize="14" Foreground="{StaticResource LabelSecondary}" />
-                                            <TextBlock x:Name="TextUpSpeed" Text="0 KB/s" FontSize="26" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
-                                            <TextBlock x:Name="TextUpTotal" Text="Total: 0 MB" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" />
+                                    <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="14" Padding="14">
+                                        <StackPanel HorizontalAlignment="Center" Spacing="3">
+                                            <TextBlock Text="↑ Upload Rate" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" />
+                                            <TextBlock x:Name="TextUpSpeed" Text="0 KB/s" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                            <TextBlock x:Name="TextUpTotal" Text="Total: 0 MB" FontSize="13" Foreground="{StaticResource LabelSecondary}" />
                                         </StackPanel>
                                     </Border>
                                 </Grid>
 
                                 <!-- Latency & Duration -->
-                                <Grid Margin="0,4,0,0">
+                                <Grid Margin="0,2,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" x:Name="TextLatency" Text="Latency: 18 ms" FontSize="14.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Left" />
-                                    <TextBlock Grid.Column="1" x:Name="TextDuration" Text="Duration: 00:02:14" FontSize="14.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Right" />
+                                    <TextBlock Grid.Column="0" x:Name="TextLatency" Text="Latency: 18 ms" FontSize="14" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Left" />
+                                    <TextBlock Grid.Column="1" x:Name="TextDuration" Text="Duration: 00:02:14" FontSize="14" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Right" />
                                 </Grid>
                             </StackPanel>
                         </Border>
 
-                        <Button x:Name="BtnDisconnect" Content="Disconnect" FontSize="17" Height="52" Background="{StaticResource DangerSoftBrush}" Foreground="{StaticResource DangerBrush}" BorderBrush="{StaticResource DangerBrush}" Style="{StaticResource ButtonBase}" Click="BtnDisconnect_Click" />
+                        <Button x:Name="BtnDisconnect" Content="Disconnect" FontSize="16.5" Height="50" Background="{StaticResource DangerSoftBrush}" Foreground="{StaticResource DangerBrush}" BorderBrush="{StaticResource DangerBrush}" Style="{StaticResource ButtonBase}" Click="BtnDisconnect_Click" />
                     </StackPanel>
 
                     <!-- ERROR PANEL -->
@@ -293,45 +326,85 @@
                 <TextBox Grid.Row="1" x:Name="TextLogsViewer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="{StaticResource FontMono}" FontSize="13" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" CornerRadius="16" Padding="14" />
             </Grid>
 
-            <!-- TAB 4: ABOUT -->
+            <!-- TAB 4: SETTINGS & ABOUT -->
             <ScrollViewer x:Name="ViewTabAbout" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Spacing="20" HorizontalAlignment="Center" MaxWidth="480">
-                    <Ellipse Width="72" Height="72" Fill="{StaticResource AccentBrush}" HorizontalAlignment="Center" Margin="0,14,0,0" />
-                    <TextBlock Text="AirTun" FontSize="28" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
-                    <TextBlock x:Name="TextAboutTagline" Text="Ultra-Fast Phone Internet Sharing for Windows" FontSize="15" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="520">
 
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="22" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                    <!-- App & Tray Settings Card -->
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="20" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
                         <StackPanel Spacing="14">
-                            <TextBlock x:Name="TextAboutDescription" Text="Modern, ultra-low latency internet sharing from Android to Windows with native SOCKS5 and WinTun virtual adapter." FontSize="14.5" Foreground="{StaticResource LabelPrimary}" TextWrapping="Wrap" />
+                            <TextBlock x:Name="TextSettingsHeader" Text="App Behavior &amp; System Tray" FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+
+                            <!-- Start with Windows Switch -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock x:Name="TextStartWithWindowsTitle" Text="Start with Windows (System Tray)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                    <TextBlock x:Name="TextStartWithWindowsDesc" Text="Launch automatically on Windows startup minimized to system tray." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchStartWithWindows" IsOn="False" Toggled="SwitchStartWithWindows_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Close to Tray Switch -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock x:Name="TextCloseToTrayTitle" Text="Minimize to Tray on Close (X)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                    <TextBlock x:Name="TextCloseToTrayDesc" Text="Keep connection active in background when window is closed." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchCloseToTray" IsOn="True" Toggled="SwitchCloseToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                            </Grid>
+
+                            <!-- Minimize to Tray Switch -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock x:Name="TextMinimizeToTrayTitle" Text="Minimize to Tray on Minimize (_)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                    <TextBlock x:Name="TextMinimizeToTrayDesc" Text="Hide window to system tray when minimized." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchMinimizeToTray" IsOn="False" Toggled="SwitchMinimizeToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Branding & About Card -->
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="20" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                        <StackPanel Spacing="12">
+                            <StackPanel Orientation="Horizontal" Spacing="10">
+                                <Ellipse Width="24" Height="24" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                <TextBlock Text="AirTun v1.0.0" FontSize="18" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
+                            </StackPanel>
+                            <TextBlock x:Name="TextAboutDescription" Text="Modern, ultra-low latency internet sharing from Android to Windows with native SOCKS5 and WinTun virtual adapter." FontSize="14" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                             <MenuFlyoutSeparator />
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Version" FontSize="14.5" Foreground="{StaticResource LabelSecondary}" />
-                                <TextBlock Grid.Column="1" Text="1.0.0 (Release)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                <TextBlock Text="Developer" FontSize="14" Foreground="{StaticResource LabelSecondary}" />
+                                <TextBlock Grid.Column="1" Text="Omid Zaferi" FontSize="14" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
                             </Grid>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="Developer" FontSize="14.5" Foreground="{StaticResource LabelSecondary}" />
-                                <TextBlock Grid.Column="1" Text="Omid Zaferi" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="License" FontSize="14.5" Foreground="{StaticResource LabelSecondary}" />
-                                <TextBlock Grid.Column="1" Text="MIT Open Source" FontSize="14.5" Foreground="{StaticResource LabelPrimary}" />
+                                <TextBlock Text="License" FontSize="14" Foreground="{StaticResource LabelSecondary}" />
+                                <TextBlock Grid.Column="1" Text="MIT Open Source" FontSize="14" Foreground="{StaticResource LabelPrimary}" />
                             </Grid>
                         </StackPanel>
                     </Border>
 
-                    <Button x:Name="BtnOpenGithub" Content="⭐ Open Project on GitHub" FontSize="16" Height="48" Style="{StaticResource SecondaryButton}" Click="BtnOpenGithub_Click" />
+                    <Button x:Name="BtnOpenGithub" Content="⭐ Open Project on GitHub" FontSize="15" Height="46" Style="{StaticResource SecondaryButton}" Click="BtnOpenGithub_Click" />
                 </StackPanel>
             </ScrollViewer>
 
@@ -347,11 +420,11 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Col 0: About -->
+                <!-- Col 0: About & Settings -->
                 <Button Grid.Column="0" x:Name="NavBtnAbout" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnAbout_Click">
                     <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="ℹ️" FontSize="18" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="NavTextAbout" Text="About" FontSize="13" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                        <TextBlock Text="⚙️" FontSize="18" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="NavTextAbout" Text="Settings" FontSize="13" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
 

@@ -13,6 +13,7 @@
             <Color x:Key="AccentColor">#00E5FF</Color>
             <Color x:Key="AccentHoverColor">#33EBFF</Color>
             <Color x:Key="AccentPressedColor">#00B4D8</Color>
+            <Color x:Key="AccentSoftColor">#2600E5FF</Color>
 
             <Color x:Key="WarningColor">#FFB703</Color>
             <Color x:Key="DangerColor">#FF3366</Color>
@@ -22,6 +23,7 @@
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
             <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
             <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
+            <SolidColorBrush x:Key="AccentSoftBrush" Color="{StaticResource AccentSoftColor}" />
 
             <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />

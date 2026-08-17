@@ -17,6 +17,7 @@
     <SelfContained>false</SelfContained>
     <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <EnableMsixTooling>true</EnableMsixTooling>
+    <UseXamlCompilerExecutable>false</UseXamlCompilerExecutable>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>

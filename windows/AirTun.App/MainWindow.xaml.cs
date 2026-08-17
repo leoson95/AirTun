@@ -1,13 +1,14 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Windows.ApplicationModel.DataTransfer;
 using Microsoft.UI;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Graphics;
+using Microsoft.UI.Xaml.Shapes;
 using AirTun.App.Services;
 using AirTun.Core;
 using AirTun.Core.Geo;
@@ -20,37 +21,48 @@ public sealed partial class MainWindow : Window
 {
     private readonly AppController _controller = new();
     private readonly DispatcherTimer _durationTimer = new();
-    private DateTimeOffset _connectedStart = DateTimeOffset.MinValue;
+    private DateTimeOffset _connectedStart = DateTimeOffset.UtcNow;
     private AppWindow? _appWindow;
     private TaskbarIcon? _trayIcon;
+    private LanDiscovery.Device? _selectedDevice;
 
-    private string? _detectedHost = null;
-    private int _detectedPort = AirTunConfig.DefaultSocksPort;
-    private string _detectedName = "Android Device";
-    private int _currentTabIndex = 0;
+    private readonly List<double> _downHistory = new(30);
+    private readonly List<double> _upHistory = new(30);
+    private double _peakSpeed = 0;
+
+    private readonly Polygon _polygonDownload = new();
+    private readonly Polyline _polylineDownload = new();
+    private readonly Polyline _polylineUpload = new();
+
+    private const int GWL_STYLE = -16;
+    private const int WS_MAXIMIZEBOX = 0x00010000;
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
     private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
 
-    [DllImport("user32.dll", EntryPoint = "GetWindowLongW", SetLastError = true)]
-    private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
-
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
     private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW", SetLastError = true)]
+    private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
+
     [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
     private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
-
-    private const int GWL_STYLE = -16;
-    private const long WS_MAXIMIZEBOX = 0x00010000L;
 
     public MainWindow()
     {
         this.InitializeComponent();
         this.Title = "AirTun";
 
+        try
+        {
+            this.SystemBackdrop = new MicaBackdrop { Kind = MicaKind.BaseAlt };
+        }
+        catch { }
+
         ConfigureWindow(620, 920);
         InitializeTray();
+        InitializeTrafficGraph();
 
         _controller.StateChanged += OnStateChanged;
         _controller.DevicesChanged += OnDevicesChanged;
@@ -68,11 +80,45 @@ public sealed partial class MainWindow : Window
         SwitchBypassDomestic.IsOn = _controller.Settings.BypassDomestic;
         SwitchCloseToTray.IsOn = _controller.Settings.CloseToTray;
         SwitchMinimizeToTray.IsOn = _controller.Settings.MinimizeToTray;
+        SwitchStartWithWindows.IsOn = _controller.Settings.StartWithWindows;
 
         RefreshCustomRulesList();
         UpdateModeCardsUi();
         ApplyStrings();
         SelectTab(0);
+
+        // Prepopulate waveform with baseline zeros
+        for (int i = 0; i < 30; i++)
+        {
+            _downHistory.Add(0);
+            _upHistory.Add(0);
+        }
+
+        // Check if launched with --minimized / --autostart
+        var args = Environment.GetCommandLineArgs();
+        if (args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase) || a.Equals("--autostart", StringComparison.OrdinalIgnoreCase)))
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                _appWindow?.Hide();
+            });
+        }
+    }
+
+    private void InitializeTrafficGraph()
+    {
+        _polygonDownload.Fill = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
+        _polygonDownload.Opacity = 0.22;
+
+        _polylineDownload.Stroke = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
+        _polylineDownload.StrokeThickness = 2.2;
+
+        _polylineUpload.Stroke = new SolidColorBrush(Windows.UI.Color.FromArgb(255, 56, 189, 248));
+        _polylineUpload.StrokeThickness = 1.6;
+
+        CanvasTrafficGraph.Children.Add(_polygonDownload);
+        CanvasTrafficGraph.Children.Add(_polylineDownload);
+        CanvasTrafficGraph.Children.Add(_polylineUpload);
     }
 
     private void ConfigureWindow(int width, int height)
@@ -98,12 +144,11 @@ public sealed partial class MainWindow : Window
 
         if (_appWindow is not null)
         {
-            _appWindow.Resize(new SizeInt32(width, height));
+            _appWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
             if (_appWindow.Presenter is OverlappedPresenter presenter)
             {
                 presenter.IsResizable = false;
                 presenter.IsMaximizable = false;
-                presenter.IsMinimizable = true;
             }
 
             _appWindow.Closing += (sender, args) =>
@@ -112,147 +157,99 @@ public sealed partial class MainWindow : Window
                 {
                     args.Cancel = true;
                     _appWindow.Hide();
-                    LocalLog.Add("AirTun minimized to system tray on Close.");
-                }
-                else
-                {
-                    ExitApp();
+                    _trayIcon?.ShowNotification("AirTun", "Minimized to system tray. Active in background.");
                 }
             };
 
             _appWindow.Changed += (sender, args) =>
             {
-                if (args.DidPresenterChange && _controller.Settings.MinimizeToTray)
+                if (args.DidPresenterChange && _appWindow.Presenter is OverlappedPresenter p)
                 {
-                    if (_appWindow.Presenter is OverlappedPresenter p && p.State == OverlappedPresenterState.Minimized)
+                    if (p.State == OverlappedPresenterState.Minimized && _controller.Settings.MinimizeToTray)
                     {
                         _appWindow.Hide();
-                        LocalLog.Add("AirTun minimized to system tray.");
                     }
                 }
             };
-
-            var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
-            if (displayArea is not null)
-            {
-                var centeredPosition = new PointInt32(
-                    (displayArea.WorkArea.Width - width) / 2,
-                    (displayArea.WorkArea.Height - height) / 2
-                );
-                _appWindow.Move(centeredPosition);
-            }
-
-            if (AppWindowTitleBar.IsCustomizationSupported())
-            {
-                this.ExtendsContentIntoTitleBar = true;
-                this.SetTitleBar(AppTitleBar);
-
-                var titleBar = _appWindow.TitleBar;
-                titleBar.ButtonBackgroundColor = Colors.Transparent;
-                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
-                titleBar.ButtonForegroundColor = Colors.White;
-                titleBar.ButtonInactiveForegroundColor = ColorHelper.FromArgb(255, 160, 160, 160);
-                titleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(40, 255, 255, 255);
-                titleBar.ButtonHoverForegroundColor = Colors.White;
-                titleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(70, 255, 255, 255);
-            }
         }
+
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(AppTitleBar);
     }
 
     private void InitializeTray()
     {
         try
         {
-            var openCommand = new XamlUICommand();
-            openCommand.ExecuteRequested += (_, _) => ShowAppWindow();
-
-            var menu = new MenuFlyout();
-
-            var itemOpen = new MenuFlyoutItem
+            var openItem = new MenuFlyoutItem { Text = Strings.TrayOpen };
+            openItem.Click += (_, _) =>
             {
-                Text = Strings.TrayOpen,
+                _appWindow?.Show();
+                if (_appWindow?.Presenter is OverlappedPresenter p)
+                {
+                    p.Restore();
+                }
+                this.Activate();
             };
-            itemOpen.Click += (_, _) => ShowAppWindow();
-            menu.Items.Add(itemOpen);
 
-            menu.Items.Add(new MenuFlyoutSeparator());
-
-            var itemExit = new MenuFlyoutItem
+            var exitItem = new MenuFlyoutItem { Text = Strings.TrayExit };
+            exitItem.Click += (_, _) =>
             {
-                Text = Strings.TrayExit,
+                _controller.Disconnect();
+                try { _trayIcon?.Dispose(); } catch { }
+                Application.Current.Exit();
             };
-            itemExit.Click += (_, _) => ExitApp();
-            menu.Items.Add(itemExit);
+
+            var flyout = new MenuFlyout();
+            flyout.Items.Add(openItem);
+            flyout.Items.Add(new MenuFlyoutSeparator());
+            flyout.Items.Add(exitItem);
 
             _trayIcon = new TaskbarIcon
             {
-                ToolTipText = "AirTun",
-                LeftClickCommand = openCommand,
-                DoubleClickCommand = openCommand,
-                ContextFlyout = menu,
-                NoLeftClickDelay = true,
+                ToolTipText = "AirTun - Phone Internet Sharing",
+                Icon = System.Drawing.SystemIcons.Shield,
+                ContextFlyout = flyout,
             };
-            _trayIcon.ForceCreate(enablesEfficiencyMode: false);
-        }
-        catch { }
-    }
 
-    private void ShowAppWindow()
-    {
-        _appWindow?.Show();
-        if (_appWindow?.Presenter is OverlappedPresenter presenter)
+            _trayIcon.LeftClickCommand = new RelayCommand(() =>
+            {
+                if (_appWindow is not null)
+                {
+                    if (_appWindow.IsVisible)
+                    {
+                        _appWindow.Hide();
+                    }
+                    else
+                    {
+                        _appWindow.Show();
+                        if (_appWindow.Presenter is OverlappedPresenter p)
+                        {
+                            p.Restore();
+                        }
+                        this.Activate();
+                    }
+                }
+            });
+
+            _trayIcon.ForceCreate();
+        }
+        catch (Exception ex)
         {
-            presenter.Restore();
+            LocalLog.Add($"System Tray notice: {ex.Message}");
         }
-        this.Activate();
     }
 
-    private void ExitApp()
+    private sealed class RelayCommand(Action execute) : System.Windows.Input.ICommand
     {
-        try
-        {
-            _controller.Disconnect();
-            _trayIcon?.Dispose();
-        }
-        catch { }
-        finally
-        {
-            Environment.Exit(0);
-        }
+        public bool CanExecute(object? parameter) => true;
+        public void Execute(object? parameter) => execute();
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
     }
-
-    private void SelectTab(int index)
-    {
-        _currentTabIndex = index;
-
-        ViewTabConnect.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
-        ViewTabRouting.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
-        ViewTabLogs.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
-        ViewTabAbout.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
-
-        var accent = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
-        var muted = (SolidColorBrush)Application.Current.Resources["LabelSecondary"];
-
-        NavTextConnect.Foreground = index == 0 ? accent : muted;
-        NavTextConnect.FontWeight = index == 0 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-
-        NavTextRouting.Foreground = index == 1 ? accent : muted;
-        NavTextRouting.FontWeight = index == 1 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-
-        NavTextLogs.Foreground = index == 2 ? accent : muted;
-        NavTextLogs.FontWeight = index == 2 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-
-        NavTextAbout.Foreground = index == 3 ? accent : muted;
-        NavTextAbout.FontWeight = index == 3 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-    }
-
-    private void NavBtnConnect_Click(object sender, RoutedEventArgs e) => SelectTab(0);
-    private void NavBtnRouting_Click(object sender, RoutedEventArgs e) => SelectTab(1);
-    private void NavBtnLogs_Click(object sender, RoutedEventArgs e) => SelectTab(2);
-    private void NavBtnAbout_Click(object sender, RoutedEventArgs e) => SelectTab(3);
 
     private void ApplyStrings()
     {
+        Root.FlowDirection = Strings.IsPersian ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         BtnLangToggle.Content = Strings.IsPersian ? "EN" : "FA";
 
         NavTextConnect.Text = Strings.TabConnect;
@@ -260,6 +257,7 @@ public sealed partial class MainWindow : Window
         NavTextLogs.Text = Strings.TabLogs;
         NavTextAbout.Text = Strings.TabAbout;
 
+        TextStatus.Text = Strings.StatusIdle;
         TextTunSub.Text = Strings.ModeTunSubtitle;
         TextProxySub.Text = Strings.ModeProxySubtitle;
 
@@ -278,11 +276,14 @@ public sealed partial class MainWindow : Window
         BtnClearLogs.Content = Strings.ClearLogsAction;
 
         TextSettingsHeader.Text = Strings.SettingsHeader;
+        TextStartWithWindowsTitle.Text = Strings.StartWithWindowsTitle;
+        TextStartWithWindowsDesc.Text = Strings.StartWithWindowsDesc;
         TextCloseToTrayTitle.Text = Strings.CloseToTrayTitle;
         TextCloseToTrayDesc.Text = Strings.CloseToTrayDesc;
         TextMinimizeToTrayTitle.Text = Strings.MinimizeToTrayTitle;
         TextMinimizeToTrayDesc.Text = Strings.MinimizeToTrayDesc;
 
+        TextLiveTrafficHeader.Text = Strings.LiveTrafficHeader;
         TextAboutDescription.Text = Strings.AboutDescription;
         BtnOpenGithub.Content = Strings.OpenGithubAction;
     }
@@ -293,7 +294,7 @@ public sealed partial class MainWindow : Window
         {
             switch (state)
             {
-                case ConnectionState.IdleState:
+                case ConnectionState.IdleState or ConnectionState.DiscoveringState:
                     PanelIdle.Visibility = Visibility.Visible;
                     PanelConnected.Visibility = Visibility.Collapsed;
                     PanelError.Visibility = Visibility.Collapsed;
@@ -310,15 +311,15 @@ public sealed partial class MainWindow : Window
                     StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["WarningBrush"];
                     break;
 
-                case ConnectionState.ConnectedState c:
+                case ConnectionState.ConnectedState connected:
                     PanelIdle.Visibility = Visibility.Collapsed;
                     PanelConnected.Visibility = Visibility.Visible;
                     PanelError.Visibility = Visibility.Collapsed;
                     TextStatus.Text = Strings.StatusConnected;
                     StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
-                    TextConnectedDevice.Text = c.DeviceName;
+                    TextConnectedDevice.Text = connected.DeviceName;
                     var bypassInfo = _controller.Routing.BypassDomestic ? " | 🇮🇷 Bypass IR: ON" : "";
-                    TextConnectedEndpoint.Text = $"{c.Host}:{c.Port} ({c.Mode.ToUpper()} Mode){bypassInfo}";
+                    TextConnectedEndpoint.Text = $"{connected.Host}:{connected.Port} ({connected.Mode.ToUpperInvariant()} Mode){bypassInfo}";
                     _connectedStart = DateTimeOffset.UtcNow;
                     _durationTimer.Start();
                     break;
@@ -329,8 +330,8 @@ public sealed partial class MainWindow : Window
                     PanelError.Visibility = Visibility.Visible;
                     TextStatus.Text = Strings.StatusError;
                     StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["DangerBrush"];
-                    TextErrorTitle.Text = Strings.GetErrorTitle(err.Message);
-                    TextErrorBody.Text = Strings.GetErrorBody(err.Message);
+                    TextErrorTitle.Text = Strings.GetErrorTitle(err.Code.ToString());
+                    TextErrorBody.Text = err.Message ?? Strings.GetErrorBody(err.Code.ToString());
                     _durationTimer.Stop();
                     break;
             }
@@ -348,8 +349,8 @@ public sealed partial class MainWindow : Window
             }
             else
             {
-                TextGeoLocation.Text = Strings.FetchingGeo;
-                TextGeoIsp.Text = "";
+                TextGeoLocation.Text = "🌐 Public IP Hidden";
+                TextGeoIsp.Text = "Traffic routing active";
             }
         });
     }
@@ -360,57 +361,92 @@ public sealed partial class MainWindow : Window
         {
             if (devices.Count > 0)
             {
-                var first = devices[0];
-                _detectedHost = first.Host;
-                _detectedPort = first.PortNumber;
-                _detectedName = first.DeviceName;
-
-                TextDetectedPhoneName.Text = first.DeviceName;
-                TextDetectedPhoneIp.Text = $"IP: {first.Host} (Ready to Pair)";
-                TextSignalStatus.Text = "⚡ Available";
-                BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
-                BtnConnect.IsEnabled = true;
-                InputPin.Focus(FocusState.Programmatic);
+                _selectedDevice = devices[0];
+                TextDetectedPhoneName.Text = _selectedDevice.DeviceName;
+                TextDetectedPhoneIp.Text = $"IP: {_selectedDevice.Host}:{_selectedDevice.PortNumber}";
+                TextSignalStatus.Text = "● Ready";
+                BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["AccentSoftBrush"];
             }
             else
             {
-                _detectedHost = null;
+                _selectedDevice = null;
                 TextDetectedPhoneName.Text = Strings.SearchingDevices;
                 TextDetectedPhoneIp.Text = "Turn on hotspot / USB and tap START in Android App";
                 TextSignalStatus.Text = "📡 Scanning";
                 BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
-                BtnConnect.IsEnabled = false;
             }
         });
     }
 
-    private void OnStatsSampled(TunnelStats.Sample sample)
+    private void OnStatsSampled(TunnelStats.Sample traffic)
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            TextDownSpeed.Text = TunnelStats.FormatRate(sample.DownloadRateBps);
-            TextUpSpeed.Text = TunnelStats.FormatRate(sample.UploadRateBps);
-            TextDownTotal.Text = $"Total: {TunnelStats.FormatBytes(sample.BytesDown)}";
-            TextUpTotal.Text = $"Total: {TunnelStats.FormatBytes(sample.BytesUp)}";
-            TextLatency.Text = sample.LatencyMs > 0 ? $"Latency: {sample.LatencyMs} ms" : "Latency: --";
+            TextDownSpeed.Text = $"{FormatBytes((long)traffic.DownloadRateBps)}/s";
+            TextUpSpeed.Text = $"{FormatBytes((long)traffic.UploadRateBps)}/s";
+            TextDownTotal.Text = $"Total: {FormatBytes(traffic.BytesDown)}";
+            TextUpTotal.Text = $"Total: {FormatBytes(traffic.BytesUp)}";
+            TextLatency.Text = $"{Strings.LatencyLabel}: {traffic.LatencyMs} ms";
+
+            // Update traffic history
+            _downHistory.Add(traffic.DownloadRateBps);
+            if (_downHistory.Count > 30) _downHistory.RemoveAt(0);
+
+            _upHistory.Add(traffic.UploadRateBps);
+            if (_upHistory.Count > 30) _upHistory.RemoveAt(0);
+
+            if (traffic.DownloadRateBps > _peakSpeed)
+            {
+                _peakSpeed = traffic.DownloadRateBps;
+            }
+            TextPeakSpeed.Text = $"Peak: {FormatBytes((long)_peakSpeed)}/s";
+
+            RedrawTrafficGraph();
         });
     }
 
-    private void UpdateDuration()
+    private void RedrawTrafficGraph()
     {
-        if (_connectedStart != DateTimeOffset.MinValue)
+        var width = CanvasTrafficGraph.ActualWidth;
+        var height = CanvasTrafficGraph.ActualHeight;
+        if (width <= 10 || height <= 10 || _downHistory.Count < 2) return;
+
+        var maxVal = Math.Max(_peakSpeed, 1024 * 50); // min scale 50 KB/s
+        var stepX = width / (_downHistory.Count - 1);
+
+        var downLinePoints = new PointCollection();
+        var downPolyPoints = new PointCollection();
+        var upLinePoints = new PointCollection();
+
+        downPolyPoints.Add(new Windows.Foundation.Point(0, height));
+
+        for (int i = 0; i < _downHistory.Count; i++)
         {
-            var elapsed = DateTimeOffset.UtcNow - _connectedStart;
-            TextDuration.Text = $"{Strings.DurationLabel}: {elapsed:hh\\:mm\\:ss}";
+            var x = i * stepX;
+            var downNorm = Math.Clamp(_downHistory[i] / maxVal, 0.0, 1.0);
+            var yDown = height - (downNorm * (height - 8)) - 4;
+
+            downLinePoints.Add(new Windows.Foundation.Point(x, yDown));
+            downPolyPoints.Add(new Windows.Foundation.Point(x, yDown));
+
+            var upNorm = Math.Clamp(_upHistory[i] / maxVal, 0.0, 1.0);
+            var yUp = height - (upNorm * (height - 8)) - 4;
+            upLinePoints.Add(new Windows.Foundation.Point(x, yUp));
         }
+
+        downPolyPoints.Add(new Windows.Foundation.Point(width, height));
+
+        _polylineDownload.Points = downLinePoints;
+        _polygonDownload.Points = downPolyPoints;
+        _polylineUpload.Points = upLinePoints;
     }
 
     private void OnLogChanged()
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            var lines = LocalLog.Snapshot().Select(e => $"{e.ElapsedSeconds:F1}s: {e.Message}");
-            TextLogsViewer.Text = string.Join(Environment.NewLine, lines);
+            var entries = LocalLog.Snapshot();
+            TextLogsViewer.Text = string.Join(Environment.NewLine, entries.Select(e => $"[{e.ElapsedSeconds:F1}s] {e.Message}"));
         });
     }
 
@@ -423,46 +459,37 @@ public sealed partial class MainWindow : Window
         });
     }
 
-    private async void BtnConnect_Click(object sender, RoutedEventArgs e)
+    private void UpdateDuration()
     {
-        var pin = InputPin.Text.Trim();
-
-        if (string.IsNullOrWhiteSpace(_detectedHost))
-        {
-            TextStatus.Text = "Please wait until phone is detected...";
-            StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["WarningBrush"];
-            return;
-        }
-
-        if (!PinCode.IsValid(pin))
-        {
-            TextStatus.Text = Strings.PinHint;
-            StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["DangerBrush"];
-            InputPin.Focus(FocusState.Programmatic);
-            return;
-        }
-
-        await _controller.ConnectAsync(_detectedHost, _detectedPort, pin, _detectedName);
+        var elapsed = DateTimeOffset.UtcNow - _connectedStart;
+        TextDuration.Text = $"{Strings.DurationLabel}: {elapsed:hh\\:mm\\:ss}";
     }
 
-    private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
+    private void SelectTab(int tabIndex)
     {
-        _controller.Disconnect();
+        ViewTabConnect.Visibility = tabIndex == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ViewTabRouting.Visibility = tabIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        ViewTabLogs.Visibility = tabIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+        ViewTabAbout.Visibility = tabIndex == 3 ? Visibility.Visible : Visibility.Collapsed;
+
+        var accent = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
+        var muted = (SolidColorBrush)Application.Current.Resources["LabelSecondary"];
+
+        NavTextConnect.Foreground = tabIndex == 0 ? accent : muted;
+        NavTextRouting.Foreground = tabIndex == 1 ? accent : muted;
+        NavTextLogs.Foreground = tabIndex == 2 ? accent : muted;
+        NavTextAbout.Foreground = tabIndex == 3 ? accent : muted;
+
+        NavTextConnect.FontWeight = tabIndex == 0 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextRouting.FontWeight = tabIndex == 1 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextLogs.FontWeight = tabIndex == 2 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextAbout.FontWeight = tabIndex == 3 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
     }
 
-    private void BtnErrorDismiss_Click(object sender, RoutedEventArgs e)
-    {
-        _controller.Disconnect();
-    }
-
-    private async void BtnErrorRetry_Click(object sender, RoutedEventArgs e)
-    {
-        var pin = InputPin.Text.Trim();
-        if (string.IsNullOrWhiteSpace(pin)) pin = "1234";
-        var host = _detectedHost ?? "192.168.43.1";
-
-        await _controller.ConnectAsync(host, _detectedPort, pin, _detectedName);
-    }
+    private void NavBtnConnect_Click(object sender, RoutedEventArgs e) => SelectTab(0);
+    private void NavBtnRouting_Click(object sender, RoutedEventArgs e) => SelectTab(1);
+    private void NavBtnLogs_Click(object sender, RoutedEventArgs e) => SelectTab(2);
+    private void NavBtnAbout_Click(object sender, RoutedEventArgs e) => SelectTab(3);
 
     private void CardModeTun_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
@@ -479,25 +506,71 @@ public sealed partial class MainWindow : Window
     private void UpdateModeCardsUi()
     {
         var isTun = _controller.ActiveMode == "tun";
-        var accent = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
-        var hairline = (SolidColorBrush)Application.Current.Resources["HairlineBrush"];
-        var tertiary = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
-        var secondary = (SolidColorBrush)Application.Current.Resources["FillSecondary"];
+        var accentBrush = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
+        var hairlineBrush = (SolidColorBrush)Application.Current.Resources["HairlineBrush"];
+        var tertiaryFill = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
+        var secondaryFill = (SolidColorBrush)Application.Current.Resources["FillSecondary"];
 
-        CardModeTun.BorderBrush = isTun ? accent : hairline;
+        CardModeTun.BorderBrush = isTun ? accentBrush : hairlineBrush;
         CardModeTun.BorderThickness = new Thickness(isTun ? 2 : 1);
-        CardModeTun.Background = isTun ? tertiary : secondary;
+        CardModeTun.Background = isTun ? tertiaryFill : secondaryFill;
 
-        CardModeProxy.BorderBrush = !isTun ? accent : hairline;
+        CardModeProxy.BorderBrush = !isTun ? accentBrush : hairlineBrush;
         CardModeProxy.BorderThickness = new Thickness(!isTun ? 2 : 1);
-        CardModeProxy.Background = !isTun ? tertiary : secondary;
+        CardModeProxy.Background = !isTun ? tertiaryFill : secondaryFill;
+    }
+
+    private async void BtnConnect_Click(object sender, RoutedEventArgs e)
+    {
+        var pin = InputPin.Text.Trim();
+        if (pin.Length != 4)
+        {
+            TextPinHint.Text = "⚠️ Please enter full 4 digits";
+            return;
+        }
+
+        var host = _selectedDevice?.Host ?? "192.168.43.1";
+        var port = _selectedDevice?.PortNumber ?? 10808;
+        var deviceName = _selectedDevice?.DeviceName ?? "Android Phone";
+
+        TextPinHint.Text = Strings.PinHint;
+        await _controller.ConnectAsync(host, port, pin, deviceName);
+    }
+
+    private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
+    {
+        _controller.Disconnect();
+    }
+
+    private void BtnErrorDismiss_Click(object sender, RoutedEventArgs e)
+    {
+        _controller.Disconnect();
+    }
+
+    private async void BtnErrorRetry_Click(object sender, RoutedEventArgs e)
+    {
+        var pin = InputPin.Text.Trim();
+        var host = _selectedDevice?.Host ?? "192.168.43.1";
+        var port = _selectedDevice?.PortNumber ?? 10808;
+        var deviceName = _selectedDevice?.DeviceName ?? "Android Phone";
+        await _controller.ConnectAsync(host, port, pin, deviceName);
     }
 
     private void SwitchBypassDomestic_Toggled(object sender, RoutedEventArgs e)
     {
         _controller.Routing.BypassDomestic = SwitchBypassDomestic.IsOn;
+        _controller.Settings.BypassDomestic = SwitchBypassDomestic.IsOn;
         _controller.SaveCurrentSettings();
         LocalLog.Add($"Bypass Domestic Sites set to: {SwitchBypassDomestic.IsOn}");
+    }
+
+    private void SwitchStartWithWindows_Toggled(object sender, RoutedEventArgs e)
+    {
+        var isEnabled = SwitchStartWithWindows.IsOn;
+        _controller.Settings.StartWithWindows = isEnabled;
+        _controller.SaveCurrentSettings();
+        StartupHelper.SetStartup(isEnabled);
+        LocalLog.Add($"Start with Windows set to: {isEnabled}");
     }
 
     private void SwitchCloseToTray_Toggled(object sender, RoutedEventArgs e)
@@ -589,5 +662,13 @@ public sealed partial class MainWindow : Window
             });
         }
         catch { }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes < 1024) return $"{bytes} B";
+        if (bytes < 1024 * 1024) return $"{bytes / 1024.0:F1} KB";
+        if (bytes < 1024 * 1024 * 1024) return $"{bytes / (1024.0 * 1024):F1} MB";
+        return $"{bytes / (1024.0 * 1024 * 1024):F2} GB";
     }
 }
