@@ -7,8 +7,104 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="ms-appx:///Styles/Tokens.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <!-- Brand Colors -->
+            <Color x:Key="AccentColor">#00E5FF</Color>
+            <Color x:Key="AccentHoverColor">#33EBFF</Color>
+            <Color x:Key="AccentPressedColor">#00B4D8</Color>
+
+            <Color x:Key="WarningColor">#FFB703</Color>
+            <Color x:Key="DangerColor">#FF3366</Color>
+            <Color x:Key="DangerSoftColor">#26FF3366</Color>
+
+            <!-- Theme Brushes -->
+            <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+            <SolidColorBrush x:Key="AccentHoverBrush" Color="{StaticResource AccentHoverColor}" />
+            <SolidColorBrush x:Key="AccentPressedBrush" Color="{StaticResource AccentPressedColor}" />
+
+            <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+            <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+            <SolidColorBrush x:Key="DangerSoftBrush" Color="{StaticResource DangerSoftColor}" />
+
+            <SolidColorBrush x:Key="WindowSolidBrush" Color="#0D1117" />
+            <SolidColorBrush x:Key="FillSecondary" Color="#161B22" />
+            <SolidColorBrush x:Key="FillTertiary" Color="#21262D" />
+            <SolidColorBrush x:Key="FillSunken" Color="#080B0F" />
+            <SolidColorBrush x:Key="HairlineBrush" Color="#30363D" />
+            <SolidColorBrush x:Key="LabelPrimary" Color="#F0F6FC" />
+            <SolidColorBrush x:Key="LabelSecondary" Color="#8B949E" />
+
+            <!-- Typography -->
+            <FontFamily x:Key="FontSystem">Segoe UI Variable, Segoe UI, Tahoma</FontFamily>
+            <FontFamily x:Key="FontMono">Cascadia Code, Consolas, Courier New</FontFamily>
+
+            <Style x:Key="TitleText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource FontSystem}" />
+                <Setter Property="FontSize" Value="22" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="Foreground" Value="{StaticResource LabelPrimary}" />
+            </Style>
+
+            <Style x:Key="HeadlineText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource FontSystem}" />
+                <Setter Property="FontSize" Value="16" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+                <Setter Property="Foreground" Value="{StaticResource LabelPrimary}" />
+            </Style>
+
+            <Style x:Key="BodyText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource FontSystem}" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="Foreground" Value="{StaticResource LabelPrimary}" />
+            </Style>
+
+            <Style x:Key="FootnoteText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource FontSystem}" />
+                <Setter Property="FontSize" Value="12" />
+                <Setter Property="Foreground" Value="{StaticResource LabelSecondary}" />
+            </Style>
+
+            <Style x:Key="CaptionText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource FontSystem}" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="Foreground" Value="{StaticResource LabelSecondary}" />
+            </Style>
+
+            <Style x:Key="MonoText" TargetType="TextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource FontMono}" />
+                <Setter Property="FontSize" Value="11" />
+                <Setter Property="Foreground" Value="{StaticResource AccentBrush}" />
+            </Style>
+
+            <!-- Buttons -->
+            <Style x:Key="ButtonBase" TargetType="Button">
+                <Setter Property="FontFamily" Value="{StaticResource FontSystem}" />
+                <Setter Property="FontSize" Value="13" />
+                <Setter Property="CornerRadius" Value="8" />
+                <Setter Property="Padding" Value="12,6" />
+                <Setter Property="HorizontalAlignment" Value="Stretch" />
+            </Style>
+
+            <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+                <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                <Setter Property="Foreground" Value="#000000" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+
+            <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+                <Setter Property="Background" Value="{StaticResource FillTertiary}" />
+                <Setter Property="Foreground" Value="{StaticResource LabelPrimary}" />
+                <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+            </Style>
+
+            <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="Foreground" Value="{StaticResource LabelSecondary}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
