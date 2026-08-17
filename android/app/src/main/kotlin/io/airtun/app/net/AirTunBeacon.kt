@@ -17,7 +17,6 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import java.io.IOException
 import java.net.DatagramPacket
 import java.net.DatagramSocket
 import java.net.InetAddress
@@ -46,13 +45,17 @@ class AirTunBeacon(
         val probeSocket = openProbeSocket()
 
         broadcastJob = scope.launch {
-            DatagramSocket().use { socket ->
-                socket.broadcast = true
-                val payload = buildBeaconPayload()
-                while (isActive) {
-                    sendBroadcast(socket, payload)
-                    delay(intervalMs)
+            try {
+                DatagramSocket().use { socket ->
+                    socket.broadcast = true
+                    val payload = buildBeaconPayload()
+                    while (isActive) {
+                        sendBroadcast(socket, payload)
+                        delay(intervalMs)
+                    }
                 }
+            } catch (e: Exception) {
+                Log.e(TAG, "Broadcast loop error: ${e.message}")
             }
         }
 
@@ -73,13 +76,14 @@ class AirTunBeacon(
     }
 
     private fun openProbeSocket(): DatagramSocket? = try {
+        val targetPort = if (port in 1..65535) port else AirTunConfig.DEFAULT_BEACON_PORT
         DatagramSocket(null).apply {
             reuseAddress = true
             broadcast = true
-            soTimeout = 500
-            bind(InetSocketAddress(port))
+            soTimeout = 1000
+            bind(InetSocketAddress(targetPort))
         }
-    } catch (e: IOException) {
+    } catch (e: Exception) {
         Log.d(TAG, "Could not bind probe listener on port $port: ${e.message}")
         null
     }
@@ -92,7 +96,7 @@ class AirTunBeacon(
                 val packet = DatagramPacket(buffer, buffer.size)
                 try {
                     socket.receive(packet)
-                } catch (_: IOException) {
+                } catch (_: Exception) {
                     continue
                 }
 
@@ -101,7 +105,7 @@ class AirTunBeacon(
                     try {
                         socket.send(DatagramPacket(answer, answer.size, packet.address, packet.port))
                         Log.d(TAG, "Responded to probe from ${packet.address}:${packet.port}")
-                    } catch (e: IOException) {
+                    } catch (e: Exception) {
                         Log.d(TAG, "Failed sending probe answer to ${packet.address}: ${e.message}")
                     }
                 }
@@ -114,23 +118,24 @@ class AirTunBeacon(
             put("app", AirTunConfig.APP_ID)
             put("v", AirTunConfig.PROTOCOL_VERSION)
             put("device", deviceName.take(64))
-            put("port", socksPort)
+            put("port", if (socksPort in 1..65535) socksPort else AirTunConfig.DEFAULT_SOCKS_PORT)
             put("pin_required", pinRequired)
         }
         return json.toString().toByteArray(Charsets.UTF_8)
     }
 
     private fun sendBroadcast(socket: DatagramSocket, bytes: ByteArray) {
+        val targetPort = if (port in 1..65535) port else AirTunConfig.DEFAULT_BEACON_PORT
         val targets = broadcastAddresses()
         for (address in targets) {
             try {
-                socket.send(DatagramPacket(bytes, bytes.size, address, port))
-            } catch (e: IOException) {
+                socket.send(DatagramPacket(bytes, bytes.size, address, targetPort))
+            } catch (_: Exception) {
             }
         }
         try {
             val global = InetAddress.getByName("255.255.255.255")
-            socket.send(DatagramPacket(bytes, bytes.size, global, port))
+            socket.send(DatagramPacket(bytes, bytes.size, global, targetPort))
         } catch (_: Exception) {}
     }
 

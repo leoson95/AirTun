@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -23,12 +24,17 @@ public sealed partial class MainWindow : Window
     private AppWindow? _appWindow;
     private TaskbarIcon? _trayIcon;
 
+    private string? _detectedHost = null;
+    private int _detectedPort = AirTunConfig.DefaultSocksPort;
+    private string _detectedName = "Android Device";
+    private int _currentTabIndex = 0;
+
     public MainWindow()
     {
         this.InitializeComponent();
         this.Title = "AirTun";
 
-        ConfigureWindow(480, 760);
+        ConfigureWindow(620, 920);
         InitializeTray();
 
         _controller.StateChanged += OnStateChanged;
@@ -48,6 +54,7 @@ public sealed partial class MainWindow : Window
         RefreshCustomRulesList();
         UpdateModeCardsUi();
         ApplyStrings();
+        SelectTab(0);
     }
 
     private void ConfigureWindow(int width, int height)
@@ -63,7 +70,15 @@ public sealed partial class MainWindow : Window
             {
                 presenter.IsResizable = false;
                 presenter.IsMaximizable = false;
+                presenter.IsMinimizable = true;
             }
+
+            _appWindow.Closing += (sender, args) =>
+            {
+                args.Cancel = true;
+                _appWindow.Hide();
+                LocalLog.Add("AirTun minimized to system tray.");
+            };
 
             var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
             if (displayArea is not null)
@@ -97,12 +112,13 @@ public sealed partial class MainWindow : Window
         try
         {
             var openCommand = new XamlUICommand();
-            openCommand.ExecuteRequested += (_, _) => this.Activate();
+            openCommand.ExecuteRequested += (_, _) => ShowAppWindow();
 
             _trayIcon = new TaskbarIcon
             {
                 ToolTipText = "AirTun",
                 LeftClickCommand = openCommand,
+                DoubleClickCommand = openCommand,
                 NoLeftClickDelay = true,
             };
             _trayIcon.ForceCreate(enablesEfficiencyMode: false);
@@ -110,34 +126,71 @@ public sealed partial class MainWindow : Window
         catch { }
     }
 
+    private void ShowAppWindow()
+    {
+        _appWindow?.Show();
+        this.Activate();
+    }
+
+    private void SelectTab(int index)
+    {
+        _currentTabIndex = index;
+
+        ViewTabConnect.Visibility = index == 0 ? Visibility.Visible : Visibility.Collapsed;
+        ViewTabRouting.Visibility = index == 1 ? Visibility.Visible : Visibility.Collapsed;
+        ViewTabLogs.Visibility = index == 2 ? Visibility.Visible : Visibility.Collapsed;
+        ViewTabAbout.Visibility = index == 3 ? Visibility.Visible : Visibility.Collapsed;
+
+        var accent = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
+        var muted = (SolidColorBrush)Application.Current.Resources["LabelSecondary"];
+
+        NavTextConnect.Foreground = index == 0 ? accent : muted;
+        NavTextConnect.FontWeight = index == 0 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+
+        NavTextRouting.Foreground = index == 1 ? accent : muted;
+        NavTextRouting.FontWeight = index == 1 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+
+        NavTextLogs.Foreground = index == 2 ? accent : muted;
+        NavTextLogs.FontWeight = index == 2 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+
+        NavTextAbout.Foreground = index == 3 ? accent : muted;
+        NavTextAbout.FontWeight = index == 3 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+    }
+
+    private void NavBtnConnect_Click(object sender, RoutedEventArgs e) => SelectTab(0);
+    private void NavBtnRouting_Click(object sender, RoutedEventArgs e) => SelectTab(1);
+    private void NavBtnLogs_Click(object sender, RoutedEventArgs e) => SelectTab(2);
+    private void NavBtnAbout_Click(object sender, RoutedEventArgs e) => SelectTab(3);
+
     private void ApplyStrings()
     {
         BtnLangToggle.Content = Strings.IsPersian ? "EN" : "FA";
+
+        NavTextConnect.Text = Strings.TabConnect;
+        NavTextRouting.Text = Strings.TabRouting;
+        NavTextLogs.Text = Strings.TabLogs;
+        NavTextAbout.Text = Strings.TabAbout;
 
         TextTunSub.Text = Strings.ModeTunSubtitle;
         TextProxySub.Text = Strings.ModeProxySubtitle;
 
         TextBypassTitle.Text = Strings.BypassDomesticTitle;
         TextBypassDesc.Text = Strings.BypassDomesticDesc;
+        TextCustomRulesHeader.Text = Strings.CustomRulesHeader;
+        InputNewRulePattern.PlaceholderText = Strings.RulePatternPlaceholder;
 
-        TextDiscoveredHeader.Text = Strings.DiscoveredDevices;
-        TextNoDevices.Text = Strings.SearchingDevices;
-        TextManualHeader.Text = Strings.ManualConnect;
-        InputHost.Header = Strings.HostLabel;
-        InputPin.Header = Strings.PinLabel;
+        TextPinHint.Text = Strings.PinHint;
         BtnConnect.Content = Strings.ConnectAction;
-
         BtnDisconnect.Content = Strings.DisconnectAction;
         BtnErrorDismiss.Content = Strings.DismissAction;
         BtnErrorRetry.Content = Strings.RetryAction;
 
-        ExpanderRouting.Header = Strings.RoutingHeader;
-        TextCustomRulesIntro.Text = Strings.CustomRulesHeader;
-        InputNewRulePattern.PlaceholderText = Strings.RulePatternPlaceholder;
-
-        ExpanderLogs.Header = Strings.AdvancedSection;
         BtnCopyLogs.Content = Strings.CopyLogsAction;
         BtnClearLogs.Content = Strings.ClearLogsAction;
+
+        TextAboutTagline.Text = Strings.Tagline;
+        TextAboutDescription.Text = Strings.AboutDescription;
+        BtnOpenGithub.Content = Strings.OpenGithubAction;
     }
 
     private void OnStateChanged(ConnectionState state)
@@ -211,8 +264,29 @@ public sealed partial class MainWindow : Window
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            ListDevices.ItemsSource = devices;
-            TextNoDevices.Visibility = devices.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            if (devices.Count > 0)
+            {
+                var first = devices[0];
+                _detectedHost = first.Host;
+                _detectedPort = first.PortNumber;
+                _detectedName = first.DeviceName;
+
+                TextDetectedPhoneName.Text = first.DeviceName;
+                TextDetectedPhoneIp.Text = $"IP: {first.Host} (Ready to Pair)";
+                TextSignalStatus.Text = "⚡ Available";
+                BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
+                BtnConnect.IsEnabled = true;
+                InputPin.Focus(FocusState.Programmatic);
+            }
+            else
+            {
+                _detectedHost = null;
+                TextDetectedPhoneName.Text = Strings.SearchingDevices;
+                TextDetectedPhoneIp.Text = "Turn on hotspot / USB and tap START in Android App";
+                TextSignalStatus.Text = "📡 Scanning";
+                BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
+                BtnConnect.IsEnabled = false;
+            }
         });
     }
 
@@ -222,9 +296,9 @@ public sealed partial class MainWindow : Window
         {
             TextDownSpeed.Text = TunnelStats.FormatRate(sample.DownloadRateBps);
             TextUpSpeed.Text = TunnelStats.FormatRate(sample.UploadRateBps);
-            TextDownTotal.Text = TunnelStats.FormatBytes(sample.BytesDown);
-            TextUpTotal.Text = TunnelStats.FormatBytes(sample.BytesUp);
-            TextLatency.Text = sample.LatencyMs > 0 ? $"Ping: {sample.LatencyMs} ms" : "Ping: --";
+            TextDownTotal.Text = $"Total: {TunnelStats.FormatBytes(sample.BytesDown)}";
+            TextUpTotal.Text = $"Total: {TunnelStats.FormatBytes(sample.BytesUp)}";
+            TextLatency.Text = sample.LatencyMs > 0 ? $"Latency: {sample.LatencyMs} ms" : "Latency: --";
         });
     }
 
@@ -257,18 +331,24 @@ public sealed partial class MainWindow : Window
 
     private async void BtnConnect_Click(object sender, RoutedEventArgs e)
     {
-        var host = InputHost.Text.Trim();
         var pin = InputPin.Text.Trim();
 
-        if (string.IsNullOrWhiteSpace(host)) host = "192.168.43.1";
+        if (string.IsNullOrWhiteSpace(_detectedHost))
+        {
+            TextStatus.Text = "Please wait until phone is detected...";
+            StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["WarningBrush"];
+            return;
+        }
+
         if (!PinCode.IsValid(pin))
         {
             TextStatus.Text = Strings.PinHint;
             StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["DangerBrush"];
+            InputPin.Focus(FocusState.Programmatic);
             return;
         }
 
-        await _controller.ConnectAsync(host, AirTunConfig.DefaultSocksPort, pin, "Manual Host");
+        await _controller.ConnectAsync(_detectedHost, _detectedPort, pin, _detectedName);
     }
 
     private void BtnDisconnect_Click(object sender, RoutedEventArgs e)
@@ -283,28 +363,11 @@ public sealed partial class MainWindow : Window
 
     private async void BtnErrorRetry_Click(object sender, RoutedEventArgs e)
     {
-        var host = InputHost.Text.Trim();
         var pin = InputPin.Text.Trim();
-        if (string.IsNullOrWhiteSpace(host)) host = "192.168.43.1";
         if (string.IsNullOrWhiteSpace(pin)) pin = "1234";
+        var host = _detectedHost ?? "192.168.43.1";
 
-        await _controller.ConnectAsync(host, AirTunConfig.DefaultSocksPort, pin, "Retried Host");
-    }
-
-    private void ListDevices_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        if (ListDevices.SelectedItem is LanDiscovery.Device d)
-        {
-            InputHost.Text = d.Host;
-            if (string.IsNullOrWhiteSpace(InputPin.Text))
-            {
-                InputPin.Focus(FocusState.Programmatic);
-            }
-            else
-            {
-                _ = _controller.ConnectAsync(d.Host, d.PortNumber, InputPin.Text.Trim(), d.DeviceName);
-            }
-        }
+        await _controller.ConnectAsync(host, _detectedPort, pin, _detectedName);
     }
 
     private void CardModeTun_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -405,5 +468,18 @@ public sealed partial class MainWindow : Window
     private void BtnClearLogs_Click(object sender, RoutedEventArgs e)
     {
         LocalLog.Clear();
+    }
+
+    private void BtnOpenGithub_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://github.com/leoson95/AirTun",
+                UseShellExecute = true,
+            });
+        }
+        catch { }
     }
 }
