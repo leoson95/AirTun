@@ -6,8 +6,10 @@ namespace AirTun.Core.Settings;
 public sealed class AppSettings
 {
     public bool BypassDomestic { get; set; } = true;
+    public bool CloseToTray { get; set; } = true;
+    public bool MinimizeToTray { get; set; } = false;
     public string DnsProvider { get; set; } = "1.1.1.1";
-    public string Language { get; set; } = "fa";
+    public string Language { get; set; } = "en";
     public string Theme { get; set; } = "dark";
     public List<RoutingRule> CustomRules { get; set; } = [];
 

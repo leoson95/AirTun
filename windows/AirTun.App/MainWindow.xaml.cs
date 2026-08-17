@@ -29,6 +29,21 @@ public sealed partial class MainWindow : Window
     private string _detectedName = "Android Device";
     private int _currentTabIndex = 0;
 
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW", SetLastError = true)]
+    private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+    [DllImport("user32.dll", EntryPoint = "GetWindowLongW", SetLastError = true)]
+    private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+    private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
+    private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+
+    private const int GWL_STYLE = -16;
+    private const long WS_MAXIMIZEBOX = 0x00010000L;
+
     public MainWindow()
     {
         this.InitializeComponent();
@@ -50,7 +65,10 @@ public sealed partial class MainWindow : Window
         _controller.RecoverOnStartup();
         _controller.StartDiscovery();
 
-        SwitchBypassDomestic.IsOn = _controller.Routing.BypassDomestic;
+        SwitchBypassDomestic.IsOn = _controller.Settings.BypassDomestic;
+        SwitchCloseToTray.IsOn = _controller.Settings.CloseToTray;
+        SwitchMinimizeToTray.IsOn = _controller.Settings.MinimizeToTray;
+
         RefreshCustomRulesList();
         UpdateModeCardsUi();
         ApplyStrings();
@@ -62,6 +80,21 @@ public sealed partial class MainWindow : Window
         var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
         var windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
         _appWindow = AppWindow.GetFromWindowId(windowId);
+
+        try
+        {
+            if (IntPtr.Size == 8)
+            {
+                var style = GetWindowLongPtr64(hWnd, GWL_STYLE).ToInt64();
+                SetWindowLongPtr64(hWnd, GWL_STYLE, new IntPtr(style & ~WS_MAXIMIZEBOX));
+            }
+            else
+            {
+                var style = GetWindowLong32(hWnd, GWL_STYLE);
+                SetWindowLong32(hWnd, GWL_STYLE, (int)(style & ~WS_MAXIMIZEBOX));
+            }
+        }
+        catch { }
 
         if (_appWindow is not null)
         {
@@ -75,9 +108,28 @@ public sealed partial class MainWindow : Window
 
             _appWindow.Closing += (sender, args) =>
             {
-                args.Cancel = true;
-                _appWindow.Hide();
-                LocalLog.Add("AirTun minimized to system tray.");
+                if (_controller.Settings.CloseToTray)
+                {
+                    args.Cancel = true;
+                    _appWindow.Hide();
+                    LocalLog.Add("AirTun minimized to system tray on Close.");
+                }
+                else
+                {
+                    ExitApp();
+                }
+            };
+
+            _appWindow.Changed += (sender, args) =>
+            {
+                if (args.DidPresenterChange && _controller.Settings.MinimizeToTray)
+                {
+                    if (_appWindow.Presenter is OverlappedPresenter p && p.State == OverlappedPresenterState.Minimized)
+                    {
+                        _appWindow.Hide();
+                        LocalLog.Add("AirTun minimized to system tray.");
+                    }
+                }
             };
 
             var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
@@ -114,11 +166,30 @@ public sealed partial class MainWindow : Window
             var openCommand = new XamlUICommand();
             openCommand.ExecuteRequested += (_, _) => ShowAppWindow();
 
+            var menu = new MenuFlyout();
+
+            var itemOpen = new MenuFlyoutItem
+            {
+                Text = Strings.TrayOpen,
+            };
+            itemOpen.Click += (_, _) => ShowAppWindow();
+            menu.Items.Add(itemOpen);
+
+            menu.Items.Add(new MenuFlyoutSeparator());
+
+            var itemExit = new MenuFlyoutItem
+            {
+                Text = Strings.TrayExit,
+            };
+            itemExit.Click += (_, _) => ExitApp();
+            menu.Items.Add(itemExit);
+
             _trayIcon = new TaskbarIcon
             {
                 ToolTipText = "AirTun",
                 LeftClickCommand = openCommand,
                 DoubleClickCommand = openCommand,
+                ContextFlyout = menu,
                 NoLeftClickDelay = true,
             };
             _trayIcon.ForceCreate(enablesEfficiencyMode: false);
@@ -129,7 +200,25 @@ public sealed partial class MainWindow : Window
     private void ShowAppWindow()
     {
         _appWindow?.Show();
+        if (_appWindow?.Presenter is OverlappedPresenter presenter)
+        {
+            presenter.Restore();
+        }
         this.Activate();
+    }
+
+    private void ExitApp()
+    {
+        try
+        {
+            _controller.Disconnect();
+            _trayIcon?.Dispose();
+        }
+        catch { }
+        finally
+        {
+            Environment.Exit(0);
+        }
     }
 
     private void SelectTab(int index)
@@ -188,7 +277,12 @@ public sealed partial class MainWindow : Window
         BtnCopyLogs.Content = Strings.CopyLogsAction;
         BtnClearLogs.Content = Strings.ClearLogsAction;
 
-        TextAboutTagline.Text = Strings.Tagline;
+        TextSettingsHeader.Text = Strings.SettingsHeader;
+        TextCloseToTrayTitle.Text = Strings.CloseToTrayTitle;
+        TextCloseToTrayDesc.Text = Strings.CloseToTrayDesc;
+        TextMinimizeToTrayTitle.Text = Strings.MinimizeToTrayTitle;
+        TextMinimizeToTrayDesc.Text = Strings.MinimizeToTrayDesc;
+
         TextAboutDescription.Text = Strings.AboutDescription;
         BtnOpenGithub.Content = Strings.OpenGithubAction;
     }
@@ -404,6 +498,20 @@ public sealed partial class MainWindow : Window
         _controller.Routing.BypassDomestic = SwitchBypassDomestic.IsOn;
         _controller.SaveCurrentSettings();
         LocalLog.Add($"Bypass Domestic Sites set to: {SwitchBypassDomestic.IsOn}");
+    }
+
+    private void SwitchCloseToTray_Toggled(object sender, RoutedEventArgs e)
+    {
+        _controller.Settings.CloseToTray = SwitchCloseToTray.IsOn;
+        _controller.SaveCurrentSettings();
+        LocalLog.Add($"Close to Tray set to: {SwitchCloseToTray.IsOn}");
+    }
+
+    private void SwitchMinimizeToTray_Toggled(object sender, RoutedEventArgs e)
+    {
+        _controller.Settings.MinimizeToTray = SwitchMinimizeToTray.IsOn;
+        _controller.SaveCurrentSettings();
+        LocalLog.Add($"Minimize to Tray set to: {SwitchMinimizeToTray.IsOn}");
     }
 
     private void BtnAddRule_Click(object sender, RoutedEventArgs e)
