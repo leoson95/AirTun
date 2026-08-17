@@ -2,7 +2,7 @@ namespace AirTun.App;
 
 public static class Strings
 {
-    private static bool _isPersian = true;
+    private static bool _isPersian = false;
 
     public static bool IsPersian
     {
@@ -16,73 +16,67 @@ public static class Strings
     public static string Tagline => _isPersian ? "اشتراک بدون مرز اینترنت گوشی با ویندوز" : "Seamless Phone Internet Sharing";
 
     public static string StatusIdle => _isPersian ? "آماده اتصال" : "Ready to Connect";
-    public static string StatusPreparing => _isPersian ? "در حال برقراری ارتباط و ساخت کارت شبکه..." : "Setting up connection & adapter...";
-    public static string StatusConnected => _isPersian ? "متصل (ترافیک در حال عبور)" : "Connected (Traffic Active)";
+    public static string StatusPreparing => _isPersian ? "در حال ساخت کارت شبکه و اتصال..." : "Setting up connection & adapter...";
+    public static string StatusConnected => _isPersian ? "متصل (ترافیک فعال)" : "Connected (Traffic Active)";
     public static string StatusDisconnected => _isPersian ? "ارتباط قطع شد" : "Disconnected";
     public static string StatusError => _isPersian ? "خطا در اتصال" : "Connection Error";
 
-    public static string ModeFullTun => _isPersian ? "حالت کامل تونل سیستم (Full TUN Mode)" : "Full System TUN Mode";
-    public static string ModeFastProxy => _isPersian ? "حالت پروکسی سریع وب (Fast Web Proxy)" : "Fast Web Proxy Mode";
+    public static string ModeTunTitle => _isPersian ? "تونل کامل سیستم (TUN)" : "Full TUN Mode";
+    public static string ModeTunSubtitle => _isPersian ? "گیمینگ، تلگرام و همه برنامه‌ها" : "Games, Telegram, CLI & All Apps";
+    public static string ModeProxyTitle => _isPersian ? "پروکسی وب (Proxy)" : "Web Proxy Mode";
+    public static string ModeProxySubtitle => _isPersian ? "مرورگرها و وب‌گردی سبک" : "Browsers & HTTP Apps";
+
     public static string ModeDescTun => _isPersian
-        ? "مسیریابی ۱۰۰٪ ترافیک ویندوز از طریق کارت شبکه مجازی (پوشش کامل بازی‌ها، تلگرام، گیت، ترمینال و وب)"
+        ? "مسیریابی ۱۰۰٪ ترافیک ویندوز از طریق کارت شبکه مجازی (پوشش بازی‌ها، تلگرام، گیت، داکر و وب)"
         : "Routes 100% of Windows traffic through virtual adapter (Gaming, Telegram, Git, Docker, Browsers)";
     public static string ModeDescProxy => _isPersian
         ? "تنظیم پروکسی سیستمی ویندوز برای مرورگرها و برنامه‌های وبگردی"
         : "Configures Windows system proxy for browsers and standard HTTP/HTTPS apps";
 
-    // Routing & Bypass Domestic
-    public static string RoutingHeader => _isPersian ? "کنترل مسیریابی و قوانین (Routing)" : "Smart Routing & Rules";
-    public static string BypassDomesticTitle => _isPersian ? "دایرکت کردن سایت‌های ایرانی (.ir)" : "Bypass Domestic (Iran) Traffic";
+    public static string RoutingHeader => _isPersian ? "کنترل مسیریابی و قوانین" : "Smart Routing & Rules";
+    public static string BypassDomesticTitle => _isPersian ? "دایرکت ترافیک ایران (.ir)" : "Bypass Iranian Sites (.ir)";
     public static string BypassDomesticDesc => _isPersian
-        ? "سایت‌ها و بانک‌های داخلی مستقیماً و بدون عبور از تونل باز می‌شوند تا حجم مصرف نشود و سرعت بالا بماند."
-        : "Domestic (.ir) domains & banking services connect directly without tunneling for max speed and savings.";
+        ? "سایت‌ها، بانک‌ها و اپ‌های ایرانی بدون عبور از فیلترشکن مستقیماً باز می‌شوند تا ترافیک مصرف نشود و درگاه‌های پرداخت قطع نشوند."
+        : "Iranian (.ir) domains & banking services connect directly without tunneling for max speed and savings.";
 
-    public static string CustomRulesHeader => _isPersian ? "قوانین سفارشی روتینگ (Custom Rules)" : "Custom Routing Rules";
-    public static string AddRuleAction => _isPersian ? "+ افزودن قانون" : "+ Add Rule";
-    public static string RulePatternPlaceholder => _isPersian ? "دامنه یا کلمه کلیدی (مثال: google.com یا *.ir)" : "Domain pattern (e.g. google.com or *.ir)";
-    public static string RuleActionDirect => _isPersian ? "مستقیم (Direct)" : "Direct";
-    public static string RuleActionProxy => _isPersian ? "از طریق تونل (Proxy)" : "Proxy";
-    public static string RuleActionBlock => _isPersian ? "مسدود (Block)" : "Block";
+    public static string CustomRulesHeader => _isPersian ? "قوانین سفارشی روتینگ" : "Custom Routing Rules";
+    public static string CustomRulesTooltip => _isPersian
+        ? "تعریف قوانین اختصاصی بر اساس دامنه یا آی‌پی (مشابه Geosite در وی‌توری)"
+        : "Define custom routing rules for specific domains or IPs (Direct, Proxy, Block)";
+
+    public static string AddRuleAction => _isPersian ? "افزودن" : "Add";
+    public static string RulePatternPlaceholder => _isPersian ? "دامنه (مثال: digikala.com یا *.ir)" : "Domain (e.g. google.com or *.ir)";
+    public static string RuleActionDirect => _isPersian ? "مستقیم" : "Direct";
+    public static string RuleActionProxy => _isPersian ? "تونل" : "Proxy";
+    public static string RuleActionBlock => _isPersian ? "مسدود" : "Block";
     public static string DeleteRuleAction => _isPersian ? "حذف" : "Delete";
 
-    // Outbound IP & Geo
-    public static string OutboundIpHeader => _isPersian ? "آی‌پی و موقعیت اتصال" : "Outbound IP & Location";
-    public static string FetchingGeo => _isPersian ? "در حال دریافت مشخصات لوکیشن..." : "Resolving outbound location...";
-    public static string RefreshGeoAction => _isPersian ? "بروزرسانی موقعیت" : "Refresh IP";
+    public static string OutboundIpHeader => _isPersian ? "آی‌پی و موقعیت خروجی" : "Outbound Location";
+    public static string FetchingGeo => _isPersian ? "در حال دریافت لوکیشن..." : "Resolving outbound location...";
+    public static string RefreshGeoAction => _isPersian ? "بروزرسانی" : "Refresh";
 
-    public static string DiscoveredDevices => _isPersian ? "دستگاه‌های کشف‌شده در هات‌اسپات / وای‌فای" : "Discovered Android Devices";
-    public static string SearchingDevices => _isPersian ? "در حال کاوش شبکه محلی جهت یافتن گوشی..." : "Searching local Wi-Fi / Hotspot for AirTun...";
-    public static string ManualConnect => _isPersian ? "یا اتصال دستی با آدرس آی‌پی" : "Or Connect Manually by IP";
+    public static string DiscoveredDevices => _isPersian ? "گوشی‌های شناسایی‌شده" : "Discovered Devices";
+    public static string SearchingDevices => _isPersian ? "در حال جستجو در هات‌اسپات / وای‌فای..." : "Searching local Wi-Fi / Hotspot for AirTun...";
+    public static string ManualConnect => _isPersian ? "اتصال دستی با آی‌پی" : "Manual IP Connection";
 
-    public static string PinLabel => _isPersian ? "کد پین ۴ رقمی امنیتی" : "4-Digit Security PIN";
-    public static string PinHint => _isPersian ? "پین ۴ رقمی نمایش‌داده‌شده روی صفحه گوشی را وارد کنید" : "Enter the 4-digit PIN displayed on your Android phone";
-    public static string HostLabel => _isPersian ? "آدرس آی‌پی سرور" : "Server Host / IP";
+    public static string PinLabel => _isPersian ? "پین‌کد ۴ رقمی" : "4-Digit PIN";
+    public static string PinHint => _isPersian ? "پین ۴ رقمی روی صفحه گوشی را وارد کنید" : "Enter the 4-digit PIN displayed on your Android phone";
+    public static string HostLabel => _isPersian ? "آدرس آی‌پی سرور" : "Server IP Address";
 
-    public static string ConnectAction => _isPersian ? "اتصال" : "Connect";
+    public static string ConnectAction => _isPersian ? "اتصال به گوشی" : "Connect";
     public static string DisconnectAction => _isPersian ? "قطع ارتباط" : "Disconnect";
     public static string CancelAction => _isPersian ? "انصراف" : "Cancel";
     public static string RetryAction => _isPersian ? "تلاش مجدد" : "Retry";
     public static string DismissAction => _isPersian ? "بستن" : "Dismiss";
 
-    public static string TrafficHeader => _isPersian ? "ترافیک و سرعت لحظه‌ای" : "Live Traffic & Bandwidth";
-    public static string TrafficTotal => _isPersian ? "حجم کل مبادله‌شده" : "Total Transferred";
-    public static string SpeedRate => _isPersian ? "سرعت انتقال" : "Current Rate";
-    public static string LatencyLabel => _isPersian ? "پینگ به گوشی" : "Tunnel Latency";
-    public static string DurationLabel => _isPersian ? "مدت اتصال" : "Duration";
+    public static string TrafficHeader => _isPersian ? "سرعت و حجم مصرفی" : "Bandwidth & Traffic";
+    public static string TrafficTotal => _isPersian ? "حجم کل" : "Total Data";
+    public static string LatencyLabel => _isPersian ? "پینگ" : "Latency";
+    public static string DurationLabel => _isPersian ? "زمان" : "Duration";
 
-    public static string AdvancedSection => _isPersian ? "تنظیمات و گزارش فنی" : "Advanced & Diagnostics";
-    public static string DnsProviderLabel => _isPersian ? "سرور دی‌ان‌اس (DNS Server)" : "DNS Provider";
-    public static string LanguageLabel => _isPersian ? "زبان برنامه (Language)" : "Language";
-    public static string ThemeLabel => _isPersian ? "تم ظاهری (Theme)" : "Theme";
-    public static string ThemeDark => _isPersian ? "تیره (Dark)" : "Dark";
-    public static string ThemeLight => _isPersian ? "روشن (Light)" : "Light";
-    public static string ThemeSystem => _isPersian ? "سیستم (System)" : "System";
-    public static string CopyLogsAction => _isPersian ? "کپی لاگ‌ها" : "Copy Logs";
+    public static string AdvancedSection => _isPersian ? "تنظیمات پیشرفته و لاگ‌ها" : "Advanced & Logs";
+    public static string CopyLogsAction => _isPersian ? "کپی" : "Copy";
     public static string ClearLogsAction => _isPersian ? "پاک‌سازی" : "Clear";
-    public static string NoLogs => _isPersian ? "هیچ لاگی ثبت نشده است." : "No log entries yet.";
-
-    public static string TrayOpen => _isPersian ? "باز کردن پنجره AirTun" : "Open AirTun";
-    public static string TrayExit => _isPersian ? "خروج کامل" : "Exit AirTun";
 
     public static string GetErrorTitle(string? code) => code switch
     {

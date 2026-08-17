@@ -26,7 +26,9 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         this.InitializeComponent();
-        CenterAndSizeWindow(480, 720);
+        this.Title = "AirTun";
+
+        ConfigureWindow(480, 760);
         InitializeTray();
 
         _controller.StateChanged += OnStateChanged;
@@ -44,7 +46,50 @@ public sealed partial class MainWindow : Window
 
         SwitchBypassDomestic.IsOn = _controller.Routing.BypassDomestic;
         RefreshCustomRulesList();
+        UpdateModeCardsUi();
         ApplyStrings();
+    }
+
+    private void ConfigureWindow(int width, int height)
+    {
+        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        var windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
+        _appWindow = AppWindow.GetFromWindowId(windowId);
+
+        if (_appWindow is not null)
+        {
+            _appWindow.Resize(new SizeInt32(width, height));
+            if (_appWindow.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.IsResizable = false;
+                presenter.IsMaximizable = false;
+            }
+
+            var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
+            if (displayArea is not null)
+            {
+                var centeredPosition = new PointInt32(
+                    (displayArea.WorkArea.Width - width) / 2,
+                    (displayArea.WorkArea.Height - height) / 2
+                );
+                _appWindow.Move(centeredPosition);
+            }
+
+            if (AppWindowTitleBar.IsCustomizationSupported())
+            {
+                this.ExtendsContentIntoTitleBar = true;
+                this.SetTitleBar(AppTitleBar);
+
+                var titleBar = _appWindow.TitleBar;
+                titleBar.ButtonBackgroundColor = Colors.Transparent;
+                titleBar.ButtonInactiveBackgroundColor = Colors.Transparent;
+                titleBar.ButtonForegroundColor = Colors.White;
+                titleBar.ButtonInactiveForegroundColor = ColorHelper.FromArgb(255, 160, 160, 160);
+                titleBar.ButtonHoverBackgroundColor = ColorHelper.FromArgb(40, 255, 255, 255);
+                titleBar.ButtonHoverForegroundColor = Colors.White;
+                titleBar.ButtonPressedBackgroundColor = ColorHelper.FromArgb(70, 255, 255, 255);
+            }
+        }
     }
 
     private void InitializeTray()
@@ -65,36 +110,12 @@ public sealed partial class MainWindow : Window
         catch { }
     }
 
-    private void CenterAndSizeWindow(int width, int height)
-    {
-        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-        var windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
-        _appWindow = AppWindow.GetFromWindowId(windowId);
-        if (_appWindow is not null)
-        {
-            _appWindow.Resize(new SizeInt32(width, height));
-            var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
-            if (displayArea is not null)
-            {
-                var centeredPosition = new PointInt32(
-                    (displayArea.WorkArea.Width - width) / 2,
-                    (displayArea.WorkArea.Height - height) / 2
-                );
-                _appWindow.Move(centeredPosition);
-            }
-        }
-    }
-
     private void ApplyStrings()
     {
-        TextAppName.Text = Strings.AppName;
-        TextTagline.Text = Strings.Tagline;
         BtnLangToggle.Content = Strings.IsPersian ? "EN" : "FA";
 
-        TextModeHeader.Text = Strings.IsPersian ? "انتخاب حالت تونل:" : "Select Tunneling Mode:";
-        RadioTun.Content = Strings.ModeFullTun;
-        RadioProxy.Content = Strings.ModeFastProxy;
-        TextModeDesc.Text = _controller.ActiveMode == "tun" ? Strings.ModeDescTun : Strings.ModeDescProxy;
+        TextTunSub.Text = Strings.ModeTunSubtitle;
+        TextProxySub.Text = Strings.ModeProxySubtitle;
 
         TextBypassTitle.Text = Strings.BypassDomesticTitle;
         TextBypassDesc.Text = Strings.BypassDomesticDesc;
@@ -104,7 +125,6 @@ public sealed partial class MainWindow : Window
         TextManualHeader.Text = Strings.ManualConnect;
         InputHost.Header = Strings.HostLabel;
         InputPin.Header = Strings.PinLabel;
-        InputPin.PlaceholderText = "1234";
         BtnConnect.Content = Strings.ConnectAction;
 
         BtnDisconnect.Content = Strings.DisconnectAction;
@@ -287,11 +307,33 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void RadioMode_Checked(object sender, RoutedEventArgs e)
+    private void CardModeTun_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (RadioTun is null || RadioProxy is null) return;
-        _controller.ActiveMode = RadioTun.IsChecked == true ? "tun" : "proxy";
-        TextModeDesc.Text = _controller.ActiveMode == "tun" ? Strings.ModeDescTun : Strings.ModeDescProxy;
+        _controller.ActiveMode = "tun";
+        UpdateModeCardsUi();
+    }
+
+    private void CardModeProxy_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        _controller.ActiveMode = "proxy";
+        UpdateModeCardsUi();
+    }
+
+    private void UpdateModeCardsUi()
+    {
+        var isTun = _controller.ActiveMode == "tun";
+        var accent = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
+        var hairline = (SolidColorBrush)Application.Current.Resources["HairlineBrush"];
+        var tertiary = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
+        var secondary = (SolidColorBrush)Application.Current.Resources["FillSecondary"];
+
+        CardModeTun.BorderBrush = isTun ? accent : hairline;
+        CardModeTun.BorderThickness = new Thickness(isTun ? 2 : 1);
+        CardModeTun.Background = isTun ? tertiary : secondary;
+
+        CardModeProxy.BorderBrush = !isTun ? accent : hairline;
+        CardModeProxy.BorderThickness = new Thickness(!isTun ? 2 : 1);
+        CardModeProxy.Background = !isTun ? tertiary : secondary;
     }
 
     private void SwitchBypassDomestic_Toggled(object sender, RoutedEventArgs e)
