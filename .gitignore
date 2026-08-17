@@ -1,0 +1,38 @@
+# --- General ---
+.DS_Store
+Thumbs.db
+*.log
+
+# CPython caches the CI scripts next to them the first time they are imported.
+__pycache__/
+*.py[cod]
+
+# --- Android / Gradle ---
+android/.gradle/
+android/build/
+android/**/build/
+android/local.properties
+android/.idea/
+android/captures/
+android/.externalNativeBuild/
+android/.cxx/
+android/.kotlin/
+*.apk
+*.aab
+*.keystore
+*.jks
+android/app/libs/
+
+# --- Windows / .NET ---
+windows/**/bin/
+windows/**/obj/
+windows/**/*.user
+windows/.vs/
+windows/**/Generated Files/
+*.msix
+*.msixbundle
+
+# --- IDE ---
+.idea/
+.vscode/
+*.iml
