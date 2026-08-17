@@ -584,7 +584,7 @@ public sealed partial class MainWindow : Window
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://github.com/leoson95/AirTun",
+                FileName = "https://github.com/omid-io/AirTun",
                 UseShellExecute = true,
             });
         }

@@ -7,7 +7,7 @@
 [![Build & Test](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#-تست‌ها-و-راستی‌آزمایی)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows%2010%2F11-blue.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/leoson95/AirTun?style=social)](https://github.com/leoson95/AirTun)
+[![GitHub stars](https://img.shields.io/github/stars/omid-io/AirTun?style=social)](https://github.com/omid-io/AirTun)
 
 </div>
 
@@ -141,4 +141,4 @@ AirTun/
 ## 📄 لایسنس (License)
 
 این پروژه تحت مجوز **MIT License** منتشر شده است.
-گیت‌هاب رسمی: [https://github.com/leoson95/AirTun](https://github.com/leoson95/AirTun)
+گیت‌هاب رسمی: [https://github.com/omid-io/AirTun](https://github.com/omid-io/AirTun)
