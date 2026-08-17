@@ -1,0 +1,11 @@
+<Project>
+  <PropertyGroup>
+    <Version Condition="'$(Version)' == ''">1.0.0-dev</Version>
+    <_AirTunNumericVersion>$(Version.Split('-')[0])</_AirTunNumericVersion>
+    <AssemblyVersion>$(_AirTunNumericVersion).0</AssemblyVersion>
+    <FileVersion>$(_AirTunNumericVersion).0</FileVersion>
+    <InformationalVersion>$(Version)</InformationalVersion>
+    <Company>AirTun</Company>
+    <Product>AirTun</Product>
+  </PropertyGroup>
+</Project>
