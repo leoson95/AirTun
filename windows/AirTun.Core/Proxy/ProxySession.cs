@@ -8,13 +8,18 @@ public sealed class ProxySession(IProxyStore store, IBackupStore backup)
         public static Result Fail(string code) => new(false, code);
     }
 
-    public static ProxySnapshot AppliedFor(string host, int port) =>
-        new(Enabled: true, Server: $"socks=socks5://{host}:{port}", Override: "<local>", AutoConfigUrl: null);
+    public static ProxySnapshot AppliedFor(string host, int port, string? bypassList = null) =>
+        new(
+            Enabled: true,
+            Server: $"socks=socks5://{host}:{port}",
+            Override: string.IsNullOrWhiteSpace(bypassList) ? "<local>" : bypassList,
+            AutoConfigUrl: null
+        );
 
-    public Result Connect(string host, int port)
+    public Result Connect(string host, int port, string? bypassList = null)
     {
         var original = store.Read();
-        var applied = AppliedFor(host, port);
+        var applied = AppliedFor(host, port, bypassList);
 
         backup.Save(new ProxyBackup(original, applied.Server!));
         store.Write(applied);

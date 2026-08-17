@@ -2,7 +2,7 @@ namespace AirTun.App;
 
 public static class Strings
 {
-    private static bool _isPersian;
+    private static bool _isPersian = true;
 
     public static bool IsPersian
     {
@@ -30,6 +30,26 @@ public static class Strings
         ? "تنظیم پروکسی سیستمی ویندوز برای مرورگرها و برنامه‌های وبگردی"
         : "Configures Windows system proxy for browsers and standard HTTP/HTTPS apps";
 
+    // Routing & Bypass Domestic
+    public static string RoutingHeader => _isPersian ? "کنترل مسیریابی و قوانین (Routing)" : "Smart Routing & Rules";
+    public static string BypassDomesticTitle => _isPersian ? "دایرکت کردن سایت‌های ایرانی (.ir)" : "Bypass Domestic (Iran) Traffic";
+    public static string BypassDomesticDesc => _isPersian
+        ? "سایت‌ها و بانک‌های داخلی مستقیماً و بدون عبور از تونل باز می‌شوند تا حجم مصرف نشود و سرعت بالا بماند."
+        : "Domestic (.ir) domains & banking services connect directly without tunneling for max speed and savings.";
+
+    public static string CustomRulesHeader => _isPersian ? "قوانین سفارشی روتینگ (Custom Rules)" : "Custom Routing Rules";
+    public static string AddRuleAction => _isPersian ? "+ افزودن قانون" : "+ Add Rule";
+    public static string RulePatternPlaceholder => _isPersian ? "دامنه یا کلمه کلیدی (مثال: google.com یا *.ir)" : "Domain pattern (e.g. google.com or *.ir)";
+    public static string RuleActionDirect => _isPersian ? "مستقیم (Direct)" : "Direct";
+    public static string RuleActionProxy => _isPersian ? "از طریق تونل (Proxy)" : "Proxy";
+    public static string RuleActionBlock => _isPersian ? "مسدود (Block)" : "Block";
+    public static string DeleteRuleAction => _isPersian ? "حذف" : "Delete";
+
+    // Outbound IP & Geo
+    public static string OutboundIpHeader => _isPersian ? "آی‌پی و موقعیت اتصال" : "Outbound IP & Location";
+    public static string FetchingGeo => _isPersian ? "در حال دریافت مشخصات لوکیشن..." : "Resolving outbound location...";
+    public static string RefreshGeoAction => _isPersian ? "بروزرسانی موقعیت" : "Refresh IP";
+
     public static string DiscoveredDevices => _isPersian ? "دستگاه‌های کشف‌شده در هات‌اسپات / وای‌فای" : "Discovered Android Devices";
     public static string SearchingDevices => _isPersian ? "در حال کاوش شبکه محلی جهت یافتن گوشی..." : "Searching local Wi-Fi / Hotspot for AirTun...";
     public static string ManualConnect => _isPersian ? "یا اتصال دستی با آدرس آی‌پی" : "Or Connect Manually by IP";
@@ -51,6 +71,7 @@ public static class Strings
     public static string DurationLabel => _isPersian ? "مدت اتصال" : "Duration";
 
     public static string AdvancedSection => _isPersian ? "تنظیمات و گزارش فنی" : "Advanced & Diagnostics";
+    public static string DnsProviderLabel => _isPersian ? "سرور دی‌ان‌اس (DNS Server)" : "DNS Provider";
     public static string LanguageLabel => _isPersian ? "زبان برنامه (Language)" : "Language";
     public static string ThemeLabel => _isPersian ? "تم ظاهری (Theme)" : "Theme";
     public static string ThemeDark => _isPersian ? "تیره (Dark)" : "Dark";
