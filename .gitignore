@@ -29,6 +29,7 @@ windows/**/obj/
 windows/**/*.user
 windows/.vs/
 windows/**/Generated Files/
+windows/publish/
 *.msix
 *.msixbundle
 
