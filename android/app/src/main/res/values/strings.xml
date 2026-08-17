@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AirTun</string>
+    <string name="tagline">Ultra-lightweight Internet Sharing for Android &amp; Windows</string>
+
+    <!-- Home -->
+    <string name="action_start">Start AirTun</string>
+    <string name="action_stop">Stop</string>
+    <string name="status_idle">AirTun is Inactive</string>
+    <string name="status_preparing">Initializing SOCKS5 Engine…</string>
+    <string name="status_waiting">Broadcasting on LAN — Waiting for Windows Client…</string>
+    <plurals name="status_connected">
+        <item quantity="one">%d device connected</item>
+        <item quantity="other">%d devices connected</item>
+    </plurals>
+    <string name="traffic_format">↑ %1$s   ↓ %2$s</string>
+    <string name="status_reconnecting">Reconnecting…</string>
+
+    <!-- Pairing & PIN -->
+    <string name="pin_code_label">4-Digit Security PIN</string>
+    <string name="pin_code_hint">Enter this 4-digit PIN in your AirTun Windows client.</string>
+    <string name="socks_endpoint_label">SOCKS5 Endpoint</string>
+    <string name="or_scan_qr">or scan the QR code</string>
+    <string name="qr_content_description">AirTun Connection QR Code</string>
+
+    <!-- Warnings -->
+    <string name="warning_no_vpn_title">No VPN Active on Phone</string>
+    <string name="warning_no_vpn_body">You are sharing your direct mobile connection. If you want to tunnel through a VPN, turn it on first.</string>
+    <string name="warning_vpn_captures_title">VPN Routing Alert</string>
+    <string name="warning_vpn_captures_body">Your phone\'s VPN might intercept local traffic. If Windows cannot connect, allow local LAN bypass in your VPN app.</string>
+
+    <!-- Advanced -->
+    <string name="advanced">Network &amp; Diagnostics</string>
+    <string name="advanced_version">Version</string>
+    <string name="advanced_ip">Local Hotspot / LAN IP</string>
+    <string name="advanced_port">SOCKS5 Port</string>
+    <string name="advanced_theme">Appearance</string>
+    <string name="theme_system">System</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="advanced_logs">Live Activity Log</string>
+    <string name="advanced_logs_clear">Clear</string>
+    <string name="advanced_logs_empty">No activity yet</string>
+    <string name="advanced_logs_share">Share Diagnostic Report</string>
+
+    <!-- Errors -->
+    <string name="error_hotspot_off_title">No Wi-Fi or Hotspot</string>
+    <string name="error_hotspot_off_body">Please connect to Wi-Fi or enable Hotspot, then start AirTun.</string>
+    <string name="error_port_in_use_title">Port 10808 Busy</string>
+    <string name="error_port_in_use_body">The SOCKS5 port is already in use by another app. Please close it and retry.</string>
+    <string name="error_service_failed_title">Engine Error</string>
+    <string name="error_service_failed_body">The SOCKS5 server encountered an error. Please try restarting.</string>
+    <string name="error_hotspot_lost_title">Network Interface Lost</string>
+    <string name="error_hotspot_lost_body">The Wi-Fi or Hotspot network dropped. Please reconnect and restart.</string>
+    <string name="action_retry">Try Again</string>
+    <string name="action_dismiss">Dismiss</string>
+
+    <!-- Battery -->
+    <string name="battery_banner_title">Background Protection</string>
+    <string name="battery_banner_body">Allow AirTun to ignore battery optimization so downloads continue when your screen is locked.</string>
+    <string name="battery_banner_allow">Allow Exemption</string>
+    <string name="battery_banner_done">Background service is protected</string>
+
+    <!-- Foreground Notification -->
+    <string name="notification_channel">AirTun Service</string>
+    <string name="notification_starting">Starting SOCKS5 Server…</string>
+    <string name="notification_waiting">AirTun Active — Ready for Windows</string>
+    <plurals name="notification_connected">
+        <item quantity="one">AirTun: %d device connected</item>
+        <item quantity="other">AirTun: %d devices connected</item>
+    </plurals>
+    <string name="notification_error">AirTun stopped — tap for details</string>
+    <string name="notification_reconnecting">Reconnecting…</string>
+</resources>

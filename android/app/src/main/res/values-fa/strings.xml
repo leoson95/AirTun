@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AirTun</string>
+    <string name="tagline">اشتراک‌گذاری فوق‌سبک و پایدار اینترنت برای اندروید و ویندوز</string>
+
+    <!-- Home -->
+    <string name="action_start">روشن کردن AirTun</string>
+    <string name="action_stop">توقف سرویس</string>
+    <string name="status_idle">سرویس AirTun غیرفعال است</string>
+    <string name="status_preparing">در حال راه‌اندازی سرور SOCKS5…</string>
+    <string name="status_waiting">در حال انتشار در شبکه — در انتظار اتصال ویندوز…</string>
+    <plurals name="status_connected">
+        <item quantity="one">%d دستگاه متصل است</item>
+        <item quantity="other">%d دستگاه متصل هستند</item>
+    </plurals>
+    <string name="traffic_format">↑ %1$s   ↓ %2$s</string>
+    <string name="status_reconnecting">در حال اتصال مجدد…</string>
+
+    <!-- Pairing & PIN -->
+    <string name="pin_code_label">پین‌کد امنیتی ۴ رقمی</string>
+    <string name="pin_code_hint">این پین‌کد ۴ رقمی را در کلاینت ویندوز AirTun وارد کنید.</string>
+    <string name="socks_endpoint_label">مشخصات سرور SOCKS5</string>
+    <string name="or_scan_qr">یا کد QR را اسکن کنید</string>
+    <string name="qr_content_description">کد QR اتصال AirTun</string>
+
+    <!-- Warnings -->
+    <string name="warning_no_vpn_title">هیچ VPN فعالی روی گوشی نیست</string>
+    <string name="warning_no_vpn_body">اینترنت مستقیم گوشی شما در حال اشتراک است. اگر قصد اشتراک اینترنت فیلترشکن را دارید، ابتدا آن را روشن کنید.</string>
+    <string name="warning_vpn_captures_title">هشدار تداخل وی‌پی‌ان</string>
+    <string name="warning_vpn_captures_body">برنامه وی‌پی‌ان ممکن است ترافیک شبکه محلی را مسدود کند. در صورت عدم اتصال ویندوز، گزینه Local Network Bypass را در وی‌پی‌ان فعال کنید.</string>
+
+    <!-- Advanced -->
+    <string name="advanced">تنظیمات شبکه و گزارش</string>
+    <string name="advanced_version">نسخه برنامه</string>
+    <string name="advanced_ip">آی‌پی شبکه محلی / هات‌اسپات</string>
+    <string name="advanced_port">پورت سرور SOCKS5</string>
+    <string name="advanced_theme">ظاهر برنامه</string>
+    <string name="theme_system">پیش‌فرض سیستم</string>
+    <string name="theme_dark">حالت تیره</string>
+    <string name="theme_light">حالت روشن</string>
+    <string name="advanced_logs">لاگ‌های زنده سیستم</string>
+    <string name="advanced_logs_clear">پاک‌کردن لاگ‌ها</string>
+    <string name="advanced_logs_empty">هنوز رویدادی ثبت نشده است</string>
+    <string name="advanced_logs_share">اشتراک‌گذاری گزارش عیب‌یابی</string>
+
+    <!-- Errors -->
+    <string name="error_hotspot_off_title">وای‌فای یا هات‌اسپات غیرفعال است</string>
+    <string name="error_hotspot_off_body">لطفاً گوشی را به وای‌فای متصل کرده یا هات‌اسپات را روشن کنید، سپس AirTun را راه‌اندازی نمایید.</string>
+    <string name="error_port_in_use_title">پورت ۱۰۸۰۸ در حال استفاده است</string>
+    <string name="error_port_in_use_body">پورت سرور توسط برنامه دیگری اشغال شده است. آن را بسته و مجدداً تلاش کنید.</string>
+    <string name="error_service_failed_title">خطا در هسته سرور</string>
+    <string name="error_service_failed_body">سرور SOCKS5 با خطا مواجه شد. لطفاً دوباره راه‌اندازی کنید.</string>
+    <string name="error_hotspot_lost_title">ارتباط شبکه محلی قطع شد</string>
+    <string name="error_hotspot_lost_body">اتصال وای‌فای یا هات‌اسپات قطع شد. پس از اتصال مجدد، سرویس را روشن کنید.</string>
+    <string name="action_retry">تلاش مجدد</string>
+    <string name="action_dismiss">بستن</string>
+
+    <!-- Battery -->
+    <string name="battery_banner_title">پایداری در پس‌زمینه</string>
+    <string name="battery_banner_body">به AirTun اجازه دهید از بهینه‌سازی باتری معاف شود تا با قفل شدن صفحه، دانلود و اتصال ویندوز قطع نشود.</string>
+    <string name="battery_banner_allow">اجازه دادن</string>
+    <string name="battery_banner_done">اجرای پایدار در پس‌زمینه محافظت شده است</string>
+
+    <!-- Foreground Notification -->
+    <string name="notification_channel">سرویس AirTun</string>
+    <string name="notification_starting">در حال اجرای سرور SOCKS5…</string>
+    <string name="notification_waiting">AirTun فعال است — آماده برای اتصال ویندوز</string>
+    <plurals name="notification_connected">
+        <item quantity="one">AirTun: %d دستگاه متصل است</item>
+        <item quantity="other">AirTun: %d دستگاه متصل هستند</item>
+    </plurals>
+    <string name="notification_error">سرویس AirTun متوقف شد — جهت مشاهده لمس کنید</string>
+    <string name="notification_reconnecting">در حال اتصال مجدد…</string>
+</resources>
