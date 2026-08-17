@@ -19,7 +19,7 @@
 
             <!-- Brand Logo & Title -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                <Ellipse Width="12" Height="12" Fill="{StaticResource AccentBrush}" />
+                <Image Source="Assets/TitleBarLogo.png" Width="20" Height="20" VerticalAlignment="Center" />
                 <TextBlock Text="AirTun" FontSize="17" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
                 <Border Background="{StaticResource FillTertiary}" CornerRadius="6" Padding="6,2" Margin="4,0,0,0" VerticalAlignment="Center">
                     <TextBlock Text="v1.0" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" />
@@ -380,7 +380,7 @@
                     <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="20" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
                         <StackPanel Spacing="12">
                             <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Ellipse Width="24" Height="24" Fill="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                <Image Source="Assets/Square44x44Logo.png" Width="26" Height="26" VerticalAlignment="Center" />
                                 <TextBlock Text="AirTun v1.0.0" FontSize="18" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
                             </StackPanel>
                             <TextBlock x:Name="TextAboutDescription" Text="Modern, ultra-low latency internet sharing from Android to Windows with native SOCKS5 and WinTun virtual adapter." FontSize="14" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />

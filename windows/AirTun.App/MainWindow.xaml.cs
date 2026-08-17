@@ -144,6 +144,12 @@ public sealed partial class MainWindow : Window
 
         if (_appWindow is not null)
         {
+            var appIconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
+            if (File.Exists(appIconPath))
+            {
+                try { _appWindow.SetIcon(appIconPath); } catch { }
+            }
+
             _appWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
             if (_appWindow.Presenter is OverlappedPresenter presenter)
             {
@@ -205,10 +211,15 @@ public sealed partial class MainWindow : Window
             flyout.Items.Add(new MenuFlyoutSeparator());
             flyout.Items.Add(exitItem);
 
+            var trayIconPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "TrayIcon.ico");
+            var icon = File.Exists(trayIconPath)
+                ? new System.Drawing.Icon(trayIconPath)
+                : System.Drawing.SystemIcons.Shield;
+
             _trayIcon = new TaskbarIcon
             {
                 ToolTipText = "AirTun - Phone Internet Sharing",
-                Icon = System.Drawing.SystemIcons.Shield,
+                Icon = icon,
                 ContextFlyout = flyout,
             };
 

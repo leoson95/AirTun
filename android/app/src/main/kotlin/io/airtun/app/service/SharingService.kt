@@ -263,7 +263,7 @@ class SharingService : Service() {
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(text)
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(launchIntent)
             .setOngoing(state !is ConnectionState.Idle && state !is ConnectionState.Error)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
