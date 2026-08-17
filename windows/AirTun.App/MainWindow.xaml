@@ -58,6 +58,21 @@
                         </StackPanel>
                     </Border>
 
+                    <!-- Smart Routing Domestic Bypass Switch -->
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="14" Padding="12" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
+                                <TextBlock x:Name="TextBypassTitle" Text="Bypass Domestic (.ir) Sites" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                <TextBlock x:Name="TextBypassDesc" Text="Open Iranian sites directly without tunneling" Style="{StaticResource CaptionText}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" x:Name="SwitchBypassDomestic" IsOn="True" Toggled="SwitchBypassDomestic_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+
                     <!-- Discovered Devices List -->
                     <Border Background="{StaticResource FillSecondary}" CornerRadius="14" Padding="12" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
                         <StackPanel Spacing="8">
@@ -98,10 +113,27 @@
                 <StackPanel x:Name="PanelConnected" Spacing="12" Visibility="Collapsed">
                     <Border Background="{StaticResource FillSecondary}" CornerRadius="16" Padding="14" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1">
                         <StackPanel Spacing="10">
+                            <!-- Device info & Mode -->
                             <TextBlock x:Name="TextConnectedDevice" Text="Connected to Phone" Style="{StaticResource HeadlineText}" Foreground="{StaticResource AccentBrush}" />
                             <TextBlock x:Name="TextConnectedEndpoint" Text="192.168.43.1:10808 (Full TUN Mode)" Style="{StaticResource MonoText}" />
 
-                            <Grid Margin="0,6,0,0">
+                            <!-- Outbound IP & Geo Location Card -->
+                            <Border Background="{StaticResource FillSunken}" CornerRadius="10" Padding="10" Margin="0,4,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Spacing="2">
+                                        <TextBlock x:Name="TextGeoLocation" Text="🌐 Resolving location..." Style="{StaticResource BodyText}" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                                        <TextBlock x:Name="TextGeoIsp" Text="Detecting public IP &amp; ISP..." Style="{StaticResource CaptionText}" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" x:Name="BtnRefreshGeo" Content="🔄" Padding="6,2" Height="30" MinHeight="30" Style="{StaticResource QuietButton}" Click="BtnRefreshGeo_Click" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Live Speed & Data Gauges -->
+                            <Grid Margin="0,4,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
@@ -124,7 +156,7 @@
                                 </Border>
                             </Grid>
 
-                            <Grid Margin="0,4,0,0">
+                            <Grid Margin="0,2,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="*" />
@@ -157,19 +189,61 @@
                     </Grid>
                 </StackPanel>
 
+                <!-- CUSTOM ROUTING RULES MANAGER EXPANDER -->
+                <Expander x:Name="ExpanderRouting" Header="Smart Routing &amp; Rules" Margin="0,4,0,0" HorizontalAlignment="Stretch" CornerRadius="12">
+                    <StackPanel Spacing="8" Padding="2">
+                        <TextBlock x:Name="TextCustomRulesIntro" Text="Custom Rules (Direct vs Proxy)" Style="{StaticResource CaptionText}" />
+
+                        <!-- Add Rule Row -->
+                        <Grid ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBox Grid.Column="0" x:Name="InputNewRulePattern" PlaceholderText="Domain (e.g. digikala.com)" />
+                            <ComboBox Grid.Column="1" x:Name="ComboNewRuleAction" SelectedIndex="0" MinWidth="85">
+                                <ComboBoxItem Content="Direct" />
+                                <ComboBoxItem Content="Proxy" />
+                                <ComboBoxItem Content="Block" />
+                            </ComboBox>
+                            <Button Grid.Column="2" x:Name="BtnAddRule" Content="+" Padding="10,4" Style="{StaticResource PrimaryButton}" Click="BtnAddRule_Click" />
+                        </Grid>
+
+                        <!-- Custom Rules List -->
+                        <ListView x:Name="ListCustomRules" SelectionMode="None" MaxHeight="130">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="4,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Pattern}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <Border Grid.Column="1" Background="{StaticResource FillTertiary}" CornerRadius="6" Padding="6,2" Margin="4,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Action}" Style="{StaticResource CaptionText}" Foreground="{StaticResource AccentBrush}" />
+                                        </Border>
+                                        <Button Grid.Column="2" Content="✕" Padding="6,2" Height="26" MinHeight="26" Style="{StaticResource QuietButton}" Click="BtnDeleteRule_Click" Tag="{Binding}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
+                </Expander>
+
+                <!-- Advanced & Diagnostic Logs -->
+                <Expander x:Name="ExpanderLogs" Header="Advanced &amp; Diagnostics" Margin="0,4,0,0" HorizontalAlignment="Stretch" CornerRadius="12">
+                    <StackPanel Spacing="6" Padding="2">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                            <Button x:Name="BtnCopyLogs" Content="Copy" Padding="8,2" Height="28" MinHeight="28" Style="{StaticResource QuietButton}" Click="BtnCopyLogs_Click" />
+                            <Button x:Name="BtnClearLogs" Content="Clear" Padding="8,2" Height="28" MinHeight="28" Style="{StaticResource QuietButton}" Click="BtnClearLogs_Click" />
+                        </StackPanel>
+                        <TextBox x:Name="TextLogsViewer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="90" FontFamily="{StaticResource FontMono}" FontSize="11" />
+                    </StackPanel>
+                </Expander>
+
             </StackPanel>
         </ScrollViewer>
-
-        <!-- Advanced & Diagnostic Logs -->
-        <Expander Grid.Row="2" x:Name="ExpanderLogs" Header="Advanced &amp; Diagnostics" Margin="0,8,0,0" HorizontalAlignment="Stretch" CornerRadius="12">
-            <StackPanel Spacing="6" Padding="2">
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
-                    <Button x:Name="BtnCopyLogs" Content="Copy" Padding="8,2" Height="28" MinHeight="28" Style="{StaticResource QuietButton}" Click="BtnCopyLogs_Click" />
-                    <Button x:Name="BtnClearLogs" Content="Clear" Padding="8,2" Height="28" MinHeight="28" Style="{StaticResource QuietButton}" Click="BtnClearLogs_Click" />
-                </StackPanel>
-                <TextBox x:Name="TextLogsViewer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="90" FontFamily="{StaticResource FontMono}" FontSize="11" />
-            </StackPanel>
-        </Expander>
-
     </Grid>
 </Window>

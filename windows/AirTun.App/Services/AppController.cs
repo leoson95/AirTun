@@ -1,5 +1,8 @@
 using AirTun.Core;
+using AirTun.Core.Geo;
 using AirTun.Core.Proxy;
+using AirTun.Core.Routing;
+using AirTun.Core.Settings;
 using AirTun.Core.Tunnel;
 
 namespace AirTun.App.Services;
@@ -15,9 +18,15 @@ public sealed class AppController : IDisposable
     public ConnectionState State { get; private set; } = ConnectionState.Idle;
     public string ActiveMode { get; set; } = "tun";
 
+    public RoutingManager Routing { get; } = new();
+    public GeoIpService GeoIp { get; } = new();
+    public AppSettings Settings { get; private set; } = new();
+    public GeoIpInfo? CurrentGeo { get; private set; }
+
     public event Action<ConnectionState>? StateChanged;
     public event Action<IReadOnlyList<LanDiscovery.Device>>? DevicesChanged;
     public event Action<TunnelStats.Sample>? StatsSampled;
+    public event Action<GeoIpInfo?>? GeoLocationUpdated;
 
     public AppController()
     {
@@ -26,6 +35,25 @@ public sealed class AppController : IDisposable
         _tunSession = new WinTunTunnelSession(new ElevatedTunnelProcessHost(tunExe));
 
         _discovery.DevicesChanged += devices => DevicesChanged?.Invoke(devices);
+
+        LoadSavedSettings();
+    }
+
+    private void LoadSavedSettings()
+    {
+        Settings = AppSettings.Load();
+        Routing.BypassDomestic = Settings.BypassDomestic;
+        foreach (var rule in Settings.CustomRules)
+        {
+            Routing.CustomRules.Add(rule);
+        }
+    }
+
+    public void SaveCurrentSettings()
+    {
+        Settings.BypassDomestic = Routing.BypassDomestic;
+        Settings.CustomRules = [.. Routing.CustomRules];
+        Settings.Save();
     }
 
     public void StartDiscovery()
@@ -50,7 +78,9 @@ public sealed class AppController : IDisposable
 
         if (ActiveMode == "proxy")
         {
-            var res = await Task.Run(() => _proxySession.Connect(host, port));
+            var bypassList = Routing.BuildWinInetBypassList();
+            LocalLog.Add($"Applying system proxy with {bypassList.Split(';').Length} bypass entries...");
+            var res = await Task.Run(() => _proxySession.Connect(host, port, bypassList));
             if (!res.Ok)
             {
                 LocalLog.Add($"Proxy connect failed: {res.ErrorCode}");
@@ -78,14 +108,36 @@ public sealed class AppController : IDisposable
         ));
 
         StartStatsPolling(host);
+        _ = RefreshGeoLocationAsync();
         LocalLog.Add("Connected successfully!");
         return true;
+    }
+
+    public async Task RefreshGeoLocationAsync()
+    {
+        try
+        {
+            LocalLog.Add("Resolving outbound location and IP...");
+            var geo = await GeoIp.FetchOutboundGeoAsync().ConfigureAwait(false);
+            CurrentGeo = geo;
+            if (geo is not null)
+            {
+                LocalLog.Add($"Outbound IP: {geo.Ip} ({geo.Country} {geo.FlagEmoji}) - ISP: {geo.Isp}");
+            }
+            GeoLocationUpdated?.Invoke(geo);
+        }
+        catch (Exception ex)
+        {
+            LocalLog.Add($"GeoIP resolution failed: {ex.Message}");
+        }
     }
 
     public void Disconnect()
     {
         LocalLog.Add("Disconnecting...");
         StopStatsPolling();
+        CurrentGeo = null;
+        GeoLocationUpdated?.Invoke(null);
 
         try { _proxySession.Disconnect(); } catch { }
         try { _tunSession.Disconnect(); } catch { }

@@ -9,6 +9,8 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Graphics;
 using AirTun.App.Services;
 using AirTun.Core;
+using AirTun.Core.Geo;
+using AirTun.Core.Routing;
 using H.NotifyIcon;
 
 namespace AirTun.App;
@@ -24,19 +26,24 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         this.InitializeComponent();
-        CenterAndSizeWindow(460, 680);
+        CenterAndSizeWindow(480, 720);
         InitializeTray();
 
         _controller.StateChanged += OnStateChanged;
         _controller.DevicesChanged += OnDevicesChanged;
         _controller.StatsSampled += OnStatsSampled;
+        _controller.GeoLocationUpdated += OnGeoLocationUpdated;
         LocalLog.Changed += OnLogChanged;
+        _controller.Routing.RulesChanged += RefreshCustomRulesList;
 
         _durationTimer.Interval = TimeSpan.FromSeconds(1);
         _durationTimer.Tick += (_, _) => UpdateDuration();
 
         _controller.RecoverOnStartup();
         _controller.StartDiscovery();
+
+        SwitchBypassDomestic.IsOn = _controller.Routing.BypassDomestic;
+        RefreshCustomRulesList();
         ApplyStrings();
     }
 
@@ -55,9 +62,7 @@ public sealed partial class MainWindow : Window
             };
             _trayIcon.ForceCreate(enablesEfficiencyMode: false);
         }
-        catch
-        {
-        }
+        catch { }
     }
 
     private void CenterAndSizeWindow(int width, int height)
@@ -91,6 +96,9 @@ public sealed partial class MainWindow : Window
         RadioProxy.Content = Strings.ModeFastProxy;
         TextModeDesc.Text = _controller.ActiveMode == "tun" ? Strings.ModeDescTun : Strings.ModeDescProxy;
 
+        TextBypassTitle.Text = Strings.BypassDomesticTitle;
+        TextBypassDesc.Text = Strings.BypassDomesticDesc;
+
         TextDiscoveredHeader.Text = Strings.DiscoveredDevices;
         TextNoDevices.Text = Strings.SearchingDevices;
         TextManualHeader.Text = Strings.ManualConnect;
@@ -102,6 +110,10 @@ public sealed partial class MainWindow : Window
         BtnDisconnect.Content = Strings.DisconnectAction;
         BtnErrorDismiss.Content = Strings.DismissAction;
         BtnErrorRetry.Content = Strings.RetryAction;
+
+        ExpanderRouting.Header = Strings.RoutingHeader;
+        TextCustomRulesIntro.Text = Strings.CustomRulesHeader;
+        InputNewRulePattern.PlaceholderText = Strings.RulePatternPlaceholder;
 
         ExpanderLogs.Header = Strings.AdvancedSection;
         BtnCopyLogs.Content = Strings.CopyLogsAction;
@@ -138,7 +150,8 @@ public sealed partial class MainWindow : Window
                     TextStatus.Text = Strings.StatusConnected;
                     StatusDot.Fill = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
                     TextConnectedDevice.Text = c.DeviceName;
-                    TextConnectedEndpoint.Text = $"{c.Host}:{c.Port} ({c.Mode.ToUpper()} Mode)";
+                    var bypassInfo = _controller.Routing.BypassDomestic ? " | 🇮🇷 Bypass IR: ON" : "";
+                    TextConnectedEndpoint.Text = $"{c.Host}:{c.Port} ({c.Mode.ToUpper()} Mode){bypassInfo}";
                     _connectedStart = DateTimeOffset.UtcNow;
                     _durationTimer.Start();
                     break;
@@ -153,6 +166,23 @@ public sealed partial class MainWindow : Window
                     TextErrorBody.Text = Strings.GetErrorBody(err.Message);
                     _durationTimer.Stop();
                     break;
+            }
+        });
+    }
+
+    private void OnGeoLocationUpdated(GeoIpInfo? geo)
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (geo is not null)
+            {
+                TextGeoLocation.Text = $"{geo.FlagEmoji} {geo.Country} ({geo.Ip})";
+                TextGeoIsp.Text = $"{geo.City} · {geo.Isp}";
+            }
+            else
+            {
+                TextGeoLocation.Text = Strings.FetchingGeo;
+                TextGeoIsp.Text = "";
             }
         });
     }
@@ -193,6 +223,15 @@ public sealed partial class MainWindow : Window
         {
             var lines = LocalLog.Snapshot().Select(e => $"{e.ElapsedSeconds:F1}s: {e.Message}");
             TextLogsViewer.Text = string.Join(Environment.NewLine, lines);
+        });
+    }
+
+    private void RefreshCustomRulesList()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            ListCustomRules.ItemsSource = null;
+            ListCustomRules.ItemsSource = _controller.Routing.CustomRules.ToList();
         });
     }
 
@@ -253,6 +292,50 @@ public sealed partial class MainWindow : Window
         if (RadioTun is null || RadioProxy is null) return;
         _controller.ActiveMode = RadioTun.IsChecked == true ? "tun" : "proxy";
         TextModeDesc.Text = _controller.ActiveMode == "tun" ? Strings.ModeDescTun : Strings.ModeDescProxy;
+    }
+
+    private void SwitchBypassDomestic_Toggled(object sender, RoutedEventArgs e)
+    {
+        _controller.Routing.BypassDomestic = SwitchBypassDomestic.IsOn;
+        _controller.SaveCurrentSettings();
+        LocalLog.Add($"Bypass Domestic Sites set to: {SwitchBypassDomestic.IsOn}");
+    }
+
+    private void BtnAddRule_Click(object sender, RoutedEventArgs e)
+    {
+        var pattern = InputNewRulePattern.Text.Trim();
+        if (string.IsNullOrWhiteSpace(pattern)) return;
+
+        var action = ComboNewRuleAction.SelectedIndex switch
+        {
+            1 => RuleAction.Proxy,
+            2 => RuleAction.Block,
+            _ => RuleAction.Direct,
+        };
+
+        var type = pattern.StartsWith("*.") ? RuleType.DomainSuffix : RuleType.DomainFull;
+        _controller.Routing.AddCustomRule(new RoutingRule(type, pattern.TrimStart('*', '.'), action));
+        _controller.SaveCurrentSettings();
+
+        InputNewRulePattern.Text = "";
+        RefreshCustomRulesList();
+        LocalLog.Add($"Added custom rule: {pattern} -> {action}");
+    }
+
+    private void BtnDeleteRule_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button { Tag: RoutingRule rule })
+        {
+            _controller.Routing.RemoveCustomRule(rule);
+            _controller.SaveCurrentSettings();
+            RefreshCustomRulesList();
+            LocalLog.Add($"Removed rule: {rule.Pattern}");
+        }
+    }
+
+    private async void BtnRefreshGeo_Click(object sender, RoutedEventArgs e)
+    {
+        await _controller.RefreshGeoLocationAsync();
     }
 
     private void BtnLangToggle_Click(object sender, RoutedEventArgs e)
