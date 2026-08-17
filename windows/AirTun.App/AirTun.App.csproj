@@ -14,13 +14,14 @@
     <UseWinUI>true</UseWinUI>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
-    <SelfContained>true</SelfContained>
+    <SelfContained>false</SelfContained>
     <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
+    <SatelliteResourceLanguages>en-US;fa-IR</SatelliteResourceLanguages>
   </PropertyGroup>
 
   <ItemGroup>
