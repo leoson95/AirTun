@@ -1,0 +1,175 @@
+<Window
+    x:Class="AirTun.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid x:Name="Root" Padding="20,16,20,18" Background="{StaticResource WindowSolidBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="2,0,2,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock x:Name="TextAppName" Text="AirTun" Style="{StaticResource TitleText}" Foreground="{StaticResource AccentBrush}" />
+                <TextBlock x:Name="TextTagline" Text="Seamless Phone Internet Sharing" Style="{StaticResource CaptionText}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                <Button x:Name="BtnLangToggle" Content="FA" Padding="8,4" Height="32" MinHeight="32" Style="{StaticResource SecondaryButton}" Click="BtnLangToggle_Click" />
+                <Button x:Name="BtnThemeToggle" Content="🌙" Padding="8,4" Height="32" MinHeight="32" Style="{StaticResource SecondaryButton}" Click="BtnThemeToggle_Click" />
+            </StackPanel>
+        </Grid>
+
+        <!-- Dynamic State Content -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="12">
+
+                <!-- Status Banner -->
+                <Border x:Name="StatusBanner" Background="{StaticResource FillSecondary}" CornerRadius="12" Padding="12,8" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="{StaticResource AccentBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" x:Name="TextStatus" Text="Ready to Connect" Style="{StaticResource BodyText}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- IDLE / DISCOVERY PANEL -->
+                <StackPanel x:Name="PanelIdle" Spacing="12">
+                    <!-- Mode Selector -->
+                    <Border Background="{StaticResource FillTertiary}" CornerRadius="14" Padding="12" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                        <StackPanel Spacing="6">
+                            <TextBlock x:Name="TextModeHeader" Text="Select Tunneling Mode:" Style="{StaticResource FootnoteText}" FontWeight="Bold" />
+                            <StackPanel Spacing="4">
+                                <RadioButton x:Name="RadioTun" GroupName="ModeGroup" Content="Full System TUN Mode (All Apps &amp; Games)" IsChecked="True" Checked="RadioMode_Checked" />
+                                <RadioButton x:Name="RadioProxy" GroupName="ModeGroup" Content="Fast Web Proxy Mode (Browsers)" Checked="RadioMode_Checked" />
+                            </StackPanel>
+                            <TextBlock x:Name="TextModeDesc" Text="Routes 100% of Windows traffic through virtual adapter" Style="{StaticResource CaptionText}" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Discovered Devices List -->
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="14" Padding="12" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock x:Name="TextDiscoveredHeader" Text="Discovered Android Devices" Style="{StaticResource FootnoteText}" FontWeight="Bold" />
+                            <ListView x:Name="ListDevices" SelectionMode="Single" SelectionChanged="ListDevices_SelectionChanged" MaxHeight="120">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Padding="6,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding DeviceName}" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                                <TextBlock Text="{Binding Host}" Style="{StaticResource CaptionText}" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="▶ Connect" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" FontWeight="Bold" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+                            <TextBlock x:Name="TextNoDevices" Text="Searching local Wi-Fi / Hotspot for AirTun..." Style="{StaticResource CaptionText}" HorizontalAlignment="Center" Visibility="Visible" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Manual Host & PIN Input -->
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="14" Padding="12" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                        <StackPanel Spacing="8">
+                            <TextBlock x:Name="TextManualHeader" Text="Manual Connection" Style="{StaticResource FootnoteText}" FontWeight="Bold" />
+                            <TextBox x:Name="InputHost" Header="Server IP" PlaceholderText="192.168.43.1" />
+                            <TextBox x:Name="InputPin" Header="4-Digit PIN" PlaceholderText="1234" MaxLength="4" />
+                            <Button x:Name="BtnConnect" Content="Connect" Style="{StaticResource PrimaryButton}" Margin="0,4,0,0" Click="BtnConnect_Click" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- CONNECTED DASHBOARD -->
+                <StackPanel x:Name="PanelConnected" Spacing="12" Visibility="Collapsed">
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="16" Padding="14" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1">
+                        <StackPanel Spacing="10">
+                            <TextBlock x:Name="TextConnectedDevice" Text="Connected to Phone" Style="{StaticResource HeadlineText}" Foreground="{StaticResource AccentBrush}" />
+                            <TextBlock x:Name="TextConnectedEndpoint" Text="192.168.43.1:10808 (Full TUN Mode)" Style="{StaticResource MonoText}" />
+
+                            <Grid Margin="0,6,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border Grid.Column="0" Background="{StaticResource FillSunken}" CornerRadius="10" Padding="8" Margin="0,0,4,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="↓ Download" Style="{StaticResource CaptionText}" />
+                                        <TextBlock x:Name="TextDownSpeed" Text="0 KB/s" Style="{StaticResource BodyText}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                        <TextBlock x:Name="TextDownTotal" Text="0 MB" Style="{StaticResource FootnoteText}" />
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="10" Padding="8" Margin="4,0,0,0">
+                                    <StackPanel HorizontalAlignment="Center">
+                                        <TextBlock Text="↑ Upload" Style="{StaticResource CaptionText}" />
+                                        <TextBlock x:Name="TextUpSpeed" Text="0 KB/s" Style="{StaticResource BodyText}" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
+                                        <TextBlock x:Name="TextUpTotal" Text="0 MB" Style="{StaticResource FootnoteText}" />
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Grid Margin="0,4,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" x:Name="TextLatency" Text="Ping: 18 ms" Style="{StaticResource FootnoteText}" HorizontalAlignment="Left" />
+                                <TextBlock Grid.Column="1" x:Name="TextDuration" Text="Duration: 00:02:14" Style="{StaticResource FootnoteText}" HorizontalAlignment="Right" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Button x:Name="BtnDisconnect" Content="Disconnect" Background="{StaticResource DangerSoftBrush}" Foreground="{StaticResource DangerBrush}" BorderBrush="{StaticResource DangerBrush}" Style="{StaticResource ButtonBase}" Click="BtnDisconnect_Click" />
+                </StackPanel>
+
+                <!-- ERROR PANEL -->
+                <StackPanel x:Name="PanelError" Spacing="10" Visibility="Collapsed">
+                    <Border Background="{StaticResource DangerSoftBrush}" CornerRadius="14" Padding="14" BorderBrush="{StaticResource DangerBrush}" BorderThickness="1">
+                        <StackPanel Spacing="6" HorizontalAlignment="Center">
+                            <TextBlock Text="⚠️" FontSize="28" HorizontalAlignment="Center" />
+                            <TextBlock x:Name="TextErrorTitle" Text="Connection Error" Style="{StaticResource HeadlineText}" Foreground="{StaticResource DangerBrush}" />
+                            <TextBlock x:Name="TextErrorBody" Text="Cannot reach the Android device." Style="{StaticResource BodyText}" />
+                        </StackPanel>
+                    </Border>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0" x:Name="BtnErrorDismiss" Content="Dismiss" Style="{StaticResource SecondaryButton}" Margin="0,0,4,0" Click="BtnErrorDismiss_Click" />
+                        <Button Grid.Column="1" x:Name="BtnErrorRetry" Content="Retry" Style="{StaticResource PrimaryButton}" Margin="4,0,0,0" Click="BtnErrorRetry_Click" />
+                    </Grid>
+                </StackPanel>
+
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Advanced & Diagnostic Logs -->
+        <Expander Grid.Row="2" x:Name="ExpanderLogs" Header="Advanced &amp; Diagnostics" Margin="0,8,0,0" HorizontalAlignment="Stretch" CornerRadius="12">
+            <StackPanel Spacing="6" Padding="2">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="6">
+                    <Button x:Name="BtnCopyLogs" Content="Copy" Padding="8,2" Height="28" MinHeight="28" Style="{StaticResource QuietButton}" Click="BtnCopyLogs_Click" />
+                    <Button x:Name="BtnClearLogs" Content="Clear" Padding="8,2" Height="28" MinHeight="28" Style="{StaticResource QuietButton}" Click="BtnClearLogs_Click" />
+                </StackPanel>
+                <TextBox x:Name="TextLogsViewer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" MaxHeight="90" FontFamily="{StaticResource FontMono}" FontSize="11" />
+            </StackPanel>
+        </Expander>
+
+    </Grid>
+</Window>
