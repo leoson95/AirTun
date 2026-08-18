@@ -40,7 +40,7 @@
                 <StackPanel Spacing="16">
 
                     <!-- Status Hero Banner -->
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="16" Padding="18,16" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                    <Border Background="{StaticResource FillSecondary}" CornerRadius="16" Padding="18,14" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -62,7 +62,7 @@
                             </Grid.ColumnDefinitions>
 
                             <!-- TUN Mode Card -->
-                            <Border Grid.Column="0" x:Name="CardModeTun" CornerRadius="14" Padding="14,16" Background="{StaticResource FillTertiary}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2" PointerPressed="CardModeTun_PointerPressed" ToolTipService.ToolTip="Routes 100% of Windows traffic through virtual network adapter (Gaming, Telegram, Git, Docker, Browsers)">
+                            <Border Grid.Column="0" x:Name="CardModeTun" CornerRadius="16" Padding="16,16" Background="{StaticResource FillTertiary}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2" PointerPressed="CardModeTun_PointerPressed" ToolTipService.ToolTip="Routes 100% of Windows traffic through virtual network adapter (Gaming, Telegram, Git, Docker, Browsers)">
                                 <StackPanel Spacing="6" HorizontalAlignment="Center">
                                     <TextBlock Text="⚡ TUN Mode" FontSize="17" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
                                     <TextBlock x:Name="TextTunSub" Text="Games &amp; All Apps" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
@@ -70,7 +70,7 @@
                             </Border>
 
                             <!-- Proxy Mode Card -->
-                            <Border Grid.Column="1" x:Name="CardModeProxy" CornerRadius="14" Padding="14,16" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1" PointerPressed="CardModeProxy_PointerPressed" ToolTipService.ToolTip="Configures Windows system proxy for browsers and standard HTTP/HTTPS web apps">
+                            <Border Grid.Column="1" x:Name="CardModeProxy" CornerRadius="16" Padding="16,16" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1" PointerPressed="CardModeProxy_PointerPressed" ToolTipService.ToolTip="Configures Windows system proxy for browsers and standard HTTP/HTTPS web apps">
                                 <StackPanel Spacing="6" HorizontalAlignment="Center">
                                     <TextBlock Text="🌐 Web Proxy" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" HorizontalAlignment="Center" />
                                     <TextBlock x:Name="TextProxySub" Text="Browsers &amp; Web" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
@@ -79,7 +79,7 @@
                         </Grid>
 
                         <!-- Auto-Discovered Phone Card - Premium Style -->
-                        <Border Background="{StaticResource FillSecondary}" CornerRadius="20" Padding="0" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1" ClipToBounds="True">
+                        <Border Background="{StaticResource FillSecondary}" CornerRadius="20" Padding="0" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
                             <Grid>
                                 <!-- Subtle top accent line -->
                                 <Border Height="2" VerticalAlignment="Top" Background="{StaticResource AccentBrush}" />
@@ -97,7 +97,7 @@
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                                             <TextBlock x:Name="TextDetectedPhoneName" Text="در حال جستجو..." FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock x:Name="TextDetectedPhoneIp" Text="هاتاسپات را روشن کنید و در اپ START بزنید" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="TextDetectedPhoneIp" Text="هات‌اسپات را روشن کنید و در اپ START بزنید" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                                         </StackPanel>
                                         <Border Grid.Column="2" x:Name="BadgeSignal" Background="{StaticResource FillTertiary}" CornerRadius="10" Padding="10,5" VerticalAlignment="Center">
                                             <TextBlock x:Name="TextSignalStatus" Text="📡 Scanning" FontSize="12" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
@@ -115,10 +115,10 @@
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock x:Name="TextPinHint" Grid.Column="0" Text="پین ۴ رقمی امنیتی" FontSize="13" Foreground="{StaticResource LabelSecondary}" VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="خودکار شناسایی میشود ✓" FontSize="11" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="خودکار شناسایی می‌شود ✓" FontSize="11" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
                                         </Grid>
                                         <TextBox x:Name="InputPin" PlaceholderText="----" MaxLength="4" FontSize="28" FontWeight="Bold" TextAlignment="Center" Height="58" FontFamily="{StaticResource FontMono}" CornerRadius="12" BorderBrush="{StaticResource HairlineBrush}" />
-                                        <Button x:Name="BtnConnect" Content="اتصال به گوشی" FontSize="16" FontWeight="Bold" Height="50" Style="{StaticResource PrimaryButton}" Click="BtnConnect_Click" CornerRadius="12" />
+                                        <Button x:Name="BtnConnect" Content="اتصال به گوشی" FontSize="16" FontWeight="Bold" Height="50" Style="{StaticResource PrimaryButton}" Click="BtnConnect_Click" />
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>
@@ -426,7 +426,7 @@
 
         </Grid>
 
-        <!-- BOTTOM NAVIGATION BAR (Fixed Natural Left-to-Right layout) -->
+        <!-- BOTTOM NAVIGATION BAR (RTL order: Settings | Logs | Routing | Connect) -->
         <Border Grid.Row="2" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,1,0,0">
             <Grid Padding="0,6,0,2">
                 <Grid.ColumnDefinitions>
@@ -481,6 +481,7 @@
                 </Button>
             </Grid>
         </Border>
+
 
     </Grid>
 </Window>
