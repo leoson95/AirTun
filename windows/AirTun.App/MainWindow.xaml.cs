@@ -54,13 +54,7 @@ public sealed partial class MainWindow : Window
         this.InitializeComponent();
         this.Title = "AirTun";
 
-        try
-        {
-            this.SystemBackdrop = new MicaBackdrop { Kind = MicaKind.BaseAlt };
-        }
-        catch { }
-
-        ConfigureWindow(620, 920);
+        ConfigureWindow(420, 680);
         InitializeTray();
         InitializeTrafficGraph();
 
@@ -639,15 +633,6 @@ public sealed partial class MainWindow : Window
     {
         Strings.IsPersian = !Strings.IsPersian;
         ApplyStrings();
-    }
-
-    private void BtnThemeToggle_Click(object sender, RoutedEventArgs e)
-    {
-        if (Content is FrameworkElement root)
-        {
-            root.RequestedTheme = root.RequestedTheme == ElementTheme.Light ? ElementTheme.Dark : ElementTheme.Light;
-            BtnThemeToggle.Content = root.RequestedTheme == ElementTheme.Light ? "☀️" : "🌙";
-        }
     }
 
     private void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
