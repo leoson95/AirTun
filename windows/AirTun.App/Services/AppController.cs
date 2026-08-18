@@ -35,6 +35,7 @@ public sealed class AppController : IDisposable
         _tunSession = new WinTunTunnelSession(new ElevatedTunnelProcessHost(tunExe));
 
         _discovery.DevicesChanged += devices => DevicesChanged?.Invoke(devices);
+        _discovery.DiagnosticLog += msg => LocalLog.Add(msg);
 
         LoadSavedSettings();
     }

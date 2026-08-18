@@ -14,6 +14,9 @@ public sealed class LanDiscovery : IDisposable
     public static readonly TimeSpan StaleTimeout = AirTunConfig.BeaconStaleTimeout;
     public static readonly TimeSpan ProbeInterval = AirTunConfig.ProbeInterval;
 
+    /// <summary>Fired with diagnostic messages for the Logs tab.</summary>
+    public event Action<string>? DiagnosticLog;
+
     public sealed record Device(
         string Host,
         int PortNumber,
@@ -161,14 +164,21 @@ public sealed class LanDiscovery : IDisposable
             catch (ObjectDisposedException) { return; }
             catch (SocketException) { continue; }
 
-            Observe(result.Buffer, result.RemoteEndPoint.Address.ToString());
+            var from = result.RemoteEndPoint.Address.ToString();
+            DiagnosticLog?.Invoke($"[Discovery] UDP {result.Buffer.Length}b from {from}");
+            Observe(result.Buffer, from);
             Expire();
         }
     }
 
     public bool Observe(byte[] datagram, string? senderIp = null)
     {
-        if (!TryParseBeacon(datagram, _clock(), senderIp, out var device)) return false;
+        if (!TryParseBeacon(datagram, _clock(), senderIp, out var device))
+        {
+            DiagnosticLog?.Invoke($"[Discovery] Parse failed from {senderIp}");
+            return false;
+        }
+        DiagnosticLog?.Invoke($"[Discovery] Found: {device!.DeviceName} @ {device.Host}:{device.PortNumber} PIN={device.Pin}");
         Add(device!);
         return true;
     }
