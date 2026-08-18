@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Start tun2socks engine
-	tunDevice := fmt.Sprintf("wintun://%s", *tunNameFlag)
+	tunDevice := fmt.Sprintf("tun://%s", *tunNameFlag)
 	key := &engine.Key{
 		Device:   tunDevice,
 		Proxy:    *proxyFlag,
