@@ -60,6 +60,9 @@ public partial class App : Application
         {
             _mainWindow = new MainWindow();
             _mainWindow.Activate();
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(_mainWindow);
+            ShowWindow(hWnd, SW_SHOW);
+            SetForegroundWindow(hWnd);
         }
         catch (Exception ex)
         {

@@ -58,7 +58,7 @@ public sealed partial class MainWindow : Window
         this.Title = "AirTun";
 
         ConfigureWindow(440, 700);
-        InitializeTray();
+        UpdateTrayIconState();
         InitializeTrafficGraph();
 
 
@@ -94,11 +94,21 @@ public sealed partial class MainWindow : Window
 
         // Check if launched with --minimized / --autostart
         var args = Environment.GetCommandLineArgs();
-        if (args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase) || a.Equals("--autostart", StringComparison.OrdinalIgnoreCase)))
+        if (_controller.Settings.StartWithWindows && args.Any(a => a.Equals("--minimized", StringComparison.OrdinalIgnoreCase) || a.Equals("--autostart", StringComparison.OrdinalIgnoreCase)))
         {
             DispatcherQueue.TryEnqueue(() =>
             {
                 _appWindow?.Hide();
+            });
+        }
+        else
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                _appWindow?.Show();
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                ShowWindow(hwnd, SW_SHOW);
+                SetForegroundWindow(hwnd);
             });
         }
     }
@@ -200,9 +210,31 @@ public sealed partial class MainWindow : Window
     private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
     private const int SW_RESTORE = 9;
+    private const int SW_SHOW = 5;
+
+    private void UpdateTrayIconState()
+    {
+        bool needsTray = _controller.Settings.CloseToTray
+                      || _controller.Settings.MinimizeToTray
+                      || _controller.Settings.StartWithWindows;
+
+        if (needsTray)
+        {
+            if (_trayIcon == null)
+            {
+                InitializeTray();
+            }
+        }
+        else
+        {
+            try { _trayIcon?.Dispose(); } catch { }
+            _trayIcon = null;
+        }
+    }
 
     private void InitializeTray()
     {
+        if (_trayIcon != null) return;
         try
         {
             var openItem = new MenuFlyoutItem
@@ -652,6 +684,7 @@ public sealed partial class MainWindow : Window
         _controller.Settings.StartWithWindows = isEnabled;
         _controller.SaveCurrentSettings();
         StartupHelper.SetStartup(isEnabled);
+        UpdateTrayIconState();
         LocalLog.Add($"Start with Windows set to: {isEnabled}");
     }
 
@@ -659,6 +692,7 @@ public sealed partial class MainWindow : Window
     {
         _controller.Settings.CloseToTray = SwitchCloseToTray.IsOn;
         _controller.SaveCurrentSettings();
+        UpdateTrayIconState();
         LocalLog.Add($"Close to Tray set to: {SwitchCloseToTray.IsOn}");
     }
 
@@ -666,6 +700,7 @@ public sealed partial class MainWindow : Window
     {
         _controller.Settings.MinimizeToTray = SwitchMinimizeToTray.IsOn;
         _controller.SaveCurrentSettings();
+        UpdateTrayIconState();
         LocalLog.Add($"Minimize to Tray set to: {SwitchMinimizeToTray.IsOn}");
     }
 
