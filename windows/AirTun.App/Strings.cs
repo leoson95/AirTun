@@ -19,7 +19,7 @@ public static class Strings
     public static string TabConnect => _isPersian ? "اتصال" : "Connect";
     public static string TabRouting => _isPersian ? "مسیریابی" : "Routing";
     public static string TabLogs => _isPersian ? "لاگ‌ها" : "Logs";
-    public static string TabAbout => _isPersian ? "تنظیمات و درباره" : "Settings & About";
+    public static string TabAbout => _isPersian ? "تنظیمات" : "Settings";
 
     // Statuses
     public static string StatusIdle => _isPersian ? "آماده برای اتصال" : "Ready to Connect";

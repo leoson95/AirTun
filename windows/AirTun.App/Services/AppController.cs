@@ -108,7 +108,7 @@ public sealed class AppController : IDisposable
             Mode: ActiveMode
         ));
 
-        StartStatsPolling(host);
+        StartStatsPolling(host, port);
         _ = RefreshGeoLocationAsync();
         LocalLog.Add("Connected successfully!");
         return true;
@@ -147,7 +147,7 @@ public sealed class AppController : IDisposable
         LocalLog.Add("Disconnected.");
     }
 
-    private void StartStatsPolling(string host)
+    private void StartStatsPolling(string host, int port)
     {
         _statsTimerCts?.Cancel();
         _statsTimerCts = new CancellationTokenSource();
@@ -157,18 +157,53 @@ public sealed class AppController : IDisposable
         {
             long mockBytesUp = 0;
             long mockBytesDown = 0;
+            int consecutiveFailures = 0;
+
             while (!token.IsCancellationRequested)
             {
+                // Quick TCP health check to detect if phone server stopped
+                bool isAlive = await CheckHostHealthAsync(host, port, 1200).ConfigureAwait(false);
+                if (!isAlive)
+                {
+                    consecutiveFailures++;
+                    if (consecutiveFailures >= 2)
+                    {
+                        LocalLog.Add("Phone server stopped or unreachable. Disconnecting...");
+                        _ = Task.Run(() => Disconnect());
+                        break;
+                    }
+                }
+                else
+                {
+                    consecutiveFailures = 0;
+                }
+
                 var ping = await _stats.MeasurePingAsync(host, 1200).ConfigureAwait(false);
                 mockBytesUp += Random.Shared.Next(1024, 40960);
                 mockBytesDown += Random.Shared.Next(4096, 120480);
                 var sample = _stats.ComputeSample(mockBytesUp, mockBytesDown, ping > 0 ? ping : 18);
                 StatsSampled?.Invoke(sample);
 
-                try { await Task.Delay(1000, token).ConfigureAwait(false); }
+                try { await Task.Delay(1500, token).ConfigureAwait(false); }
                 catch { break; }
             }
         }, token);
+    }
+
+    private static async Task<bool> CheckHostHealthAsync(string host, int port, int timeoutMs)
+    {
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient();
+            var connectTask = client.ConnectAsync(host, port);
+            var delayTask = Task.Delay(timeoutMs);
+            var completed = await Task.WhenAny(connectTask, delayTask).ConfigureAwait(false);
+            return completed == connectTask && client.Connected;
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private void StopStatsPolling()

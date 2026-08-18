@@ -82,19 +82,37 @@ func main() {
 	// Wait for WinTun adapter creation
 	time.Sleep(500 * time.Millisecond)
 
-	// Configure TUN IP Address
+	// Configure TUN IP Address and Gateway
 	ipParts := strings.Split(*tunAddrFlag, "/")
 	tunIP := "10.254.1.2"
 	tunMask := "255.255.255.0"
+	tunGW := "10.254.1.1"
 	if len(ipParts) > 0 && ipParts[0] != "" {
 		tunIP = ipParts[0]
 	}
-	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP, tunMask).Run()
 
-	// Bypass direct route to phone host so tunnel traffic doesn't loop
+	// Find physical default gateway for bypass route
+	defaultGW := getDefaultGateway()
+
+	// 1. Assign IP address and default gateway to AirTun adapter
+	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP, tunMask, tunGW, "1").Run()
+
+	// 2. Set DNS servers on AirTun adapter
+	exec.Command("netsh", "interface", "ip", "set", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", "1.1.1.1").Run()
+	exec.Command("netsh", "interface", "ip", "add", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "8.8.8.8", "index=2").Run()
+
+	// 3. Bypass direct route to phone host so tunnel traffic doesn't loop
 	if proxyHost != "" && proxyHost != "127.0.0.1" && proxyHost != "localhost" {
-		exec.Command("route", "add", proxyHost, "mask", "255.255.255.255", "0.0.0.0", "metric", "1").Run()
+		if defaultGW != "" {
+			exec.Command("route", "add", proxyHost, "mask", "255.255.255.255", defaultGW, "metric", "1").Run()
+		} else {
+			exec.Command("route", "add", proxyHost, "mask", "255.255.255.255", "0.0.0.0", "metric", "1").Run()
+		}
 	}
+
+	// 4. Add dual /1 default routes to direct all system IPv4 traffic into the TUN adapter
+	exec.Command("route", "add", "0.0.0.0", "mask", "128.0.0.0", tunGW, "metric", "1").Run()
+	exec.Command("route", "add", "128.0.0.0", "mask", "128.0.0.0", tunGW, "metric", "1").Run()
 
 	// Signal READY to parent process
 	sendLine("READY")
@@ -119,7 +137,9 @@ func main() {
 	case <-done:
 	}
 
-	// Cleanup routes and stop engine
+	// Cleanup all added routes and stop engine
+	exec.Command("route", "delete", "0.0.0.0", "mask", "128.0.0.0").Run()
+	exec.Command("route", "delete", "128.0.0.0", "mask", "128.0.0.0").Run()
 	if proxyHost != "" {
 		exec.Command("route", "delete", proxyHost).Run()
 	}
@@ -128,3 +148,15 @@ func main() {
 		pipeConn.Close()
 	}
 }
+
+func getDefaultGateway() string {
+	out, err := exec.Command("powershell", "-NoProfile", "-Command", "(Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1).NextHop").Output()
+	if err == nil {
+		gw := strings.TrimSpace(string(out))
+		if gw != "" && net.ParseIP(gw) != nil {
+			return gw
+		}
+	}
+	return ""
+}
+
