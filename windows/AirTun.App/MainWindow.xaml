@@ -409,7 +409,7 @@
 
         </Grid>
 
-        <!-- BOTTOM GLASS NAVIGATION BAR (Reversed RTL Order: Connect on right/primary, About on left) -->
+        <!-- BOTTOM NAVIGATION BAR (Fixed Natural Left-to-Right layout) -->
         <Border Grid.Row="2" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,1,0,0">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -419,35 +419,35 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Col 0: About & Settings -->
-                <Button Grid.Column="0" x:Name="NavBtnAbout" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnAbout_Click">
+                <!-- Col 0: Connect (Primary / Home) -->
+                <Button Grid.Column="0" x:Name="NavBtnConnect" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnConnect_Click">
                     <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="⚙️" FontSize="18" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="NavTextAbout" Text="Settings" FontSize="13" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                        <TextBlock Text="🚀" FontSize="17" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="NavTextConnect" Text="Connect" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
-                <!-- Col 1: Logs -->
-                <Button Grid.Column="1" x:Name="NavBtnLogs" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnLogs_Click">
+                <!-- Col 1: Routing -->
+                <Button Grid.Column="1" x:Name="NavBtnRouting" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnRouting_Click">
                     <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="📋" FontSize="18" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="NavTextLogs" Text="Logs" FontSize="13" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                        <TextBlock Text="🛡️" FontSize="17" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="NavTextRouting" Text="Routing" FontSize="12.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
-                <!-- Col 2: Routing -->
-                <Button Grid.Column="2" x:Name="NavBtnRouting" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnRouting_Click">
+                <!-- Col 2: Logs -->
+                <Button Grid.Column="2" x:Name="NavBtnLogs" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnLogs_Click">
                     <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="🛡️" FontSize="18" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="NavTextRouting" Text="Routing" FontSize="13" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                        <TextBlock Text="📋" FontSize="17" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="NavTextLogs" Text="Logs" FontSize="12.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
-                <!-- Col 3: Connect (Rightmost for natural RTL reachability) -->
-                <Button Grid.Column="3" x:Name="NavBtnConnect" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnConnect_Click">
+                <!-- Col 3: Settings -->
+                <Button Grid.Column="3" x:Name="NavBtnAbout" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnAbout_Click">
                     <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock Text="🚀" FontSize="18" HorizontalAlignment="Center" />
-                        <TextBlock x:Name="NavTextConnect" Text="Connect" FontSize="13" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
+                        <TextBlock Text="⚙️" FontSize="17" HorizontalAlignment="Center" />
+                        <TextBlock x:Name="NavTextAbout" Text="Settings" FontSize="12.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                     </StackPanel>
                 </Button>
             </Grid>

@@ -254,7 +254,7 @@ public sealed partial class MainWindow : Window
 
     private void ApplyStrings()
     {
-        Root.FlowDirection = Strings.IsPersian ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        Root.FlowDirection = FlowDirection.LeftToRight;
         BtnLangToggle.Content = Strings.IsPersian ? "EN" : "FA";
 
         NavTextConnect.Text = Strings.TabConnect;
@@ -291,6 +291,14 @@ public sealed partial class MainWindow : Window
         TextLiveTrafficHeader.Text = Strings.LiveTrafficHeader;
         TextAboutDescription.Text = Strings.AboutDescription;
         BtnOpenGithub.Content = Strings.OpenGithubAction;
+
+        var flowDir = Strings.IsPersian ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
+        TextBypassDesc.FlowDirection = flowDir;
+        TextStartWithWindowsDesc.FlowDirection = flowDir;
+        TextCloseToTrayDesc.FlowDirection = flowDir;
+        TextMinimizeToTrayDesc.FlowDirection = flowDir;
+        TextAboutDescription.FlowDirection = flowDir;
+        TextPinHint.FlowDirection = flowDir;
     }
 
     private void OnStateChanged(ConnectionState state)
