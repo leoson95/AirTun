@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/url"
 	"os"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/Microsoft/go-winio"
 	"github.com/xjasonlyu/tun2socks/v2/engine"
+	"golang.org/x/net/proxy"
 )
 
 func main() {
@@ -59,12 +61,14 @@ func main() {
 
 	// Parse proxy host for routing bypass
 	proxyUrl, err := url.Parse(*proxyFlag)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Invalid proxy URL: %v\n", err)
+		os.Exit(1)
+	}
 	var proxyHost string
-	if err == nil {
-		proxyHost, _, _ = net.SplitHostPort(proxyUrl.Host)
-		if proxyHost == "" {
-			proxyHost = proxyUrl.Host
-		}
+	proxyHost, _, _ = net.SplitHostPort(proxyUrl.Host)
+	if proxyHost == "" {
+		proxyHost = proxyUrl.Host
 	}
 
 	// Start tun2socks engine
@@ -93,12 +97,11 @@ func main() {
 	// Find physical default gateway for bypass route
 	defaultGW := getDefaultGateway()
 
-	// 1. Assign IP address to AirTun adapter (without fake gateway to avoid ARP timeouts)
+	// 1. Assign IP address to AirTun adapter
 	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP, tunMask, "none").Run()
 
-	// 2. Set DNS servers on AirTun adapter
-	exec.Command("netsh", "interface", "ip", "set", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", "1.1.1.1").Run()
-	exec.Command("netsh", "interface", "ip", "add", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "8.8.8.8", "index=2").Run()
+	// 2. Set DNS servers on AirTun adapter to our local TCP-tunneled DNS forwarder (tunIP:53)
+	exec.Command("netsh", "interface", "ip", "set", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP).Run()
 
 	// 3. Bypass direct route to phone host so tunnel traffic doesn't loop
 	if proxyHost != "" && proxyHost != "127.0.0.1" && proxyHost != "localhost" {
@@ -109,7 +112,13 @@ func main() {
 		}
 	}
 
-	// 4. Add dual /1 default routes on-link to direct all system IPv4 traffic into the TUN adapter
+	// 4. Start local DNS Forwarder over SOCKS5 TCP
+	dnsStop, err := startDNSForwarder(tunIP+":53", proxyUrl)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to start local DNS forwarder: %v\n", err)
+	}
+
+	// 5. Add dual /1 default routes on-link to direct all system IPv4 traffic into the TUN adapter
 	exec.Command("route", "add", "0.0.0.0", "mask", "128.0.0.0", tunIP, "metric", "1").Run()
 	exec.Command("route", "add", "128.0.0.0", "mask", "128.0.0.0", tunIP, "metric", "1").Run()
 
@@ -137,6 +146,9 @@ func main() {
 	}
 
 	// Cleanup all added routes and stop engine
+	if dnsStop != nil {
+		dnsStop()
+	}
 	exec.Command("route", "delete", "0.0.0.0", "mask", "128.0.0.0").Run()
 	exec.Command("route", "delete", "128.0.0.0", "mask", "128.0.0.0").Run()
 	if proxyHost != "" {
@@ -146,6 +158,92 @@ func main() {
 	if pipeConn != nil {
 		pipeConn.Close()
 	}
+}
+
+func startDNSForwarder(listenAddr string, proxyUrl *url.URL) (func(), error) {
+	udpAddr, err := net.ResolveUDPAddr("udp", listenAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := net.ListenUDP("udp", udpAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	dialer, err := proxy.FromURL(proxyUrl, proxy.Direct)
+	if err != nil {
+		conn.Close()
+		return nil, err
+	}
+
+	stopChan := make(chan struct{})
+
+	go func() {
+		buf := make([]byte, 4096)
+		for {
+			select {
+			case <-stopChan:
+				return
+			default:
+			}
+
+			conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+			n, clientAddr, err := conn.ReadFromUDP(buf)
+			if err != nil {
+				continue
+			}
+
+			query := make([]byte, n)
+			copy(query, buf[:n])
+
+			go func(q []byte, cAddr *net.UDPAddr) {
+				resp, err := queryDNSOverTCP(dialer, "1.1.1.1:53", q)
+				if err != nil {
+					resp, err = queryDNSOverTCP(dialer, "8.8.8.8:53", q)
+				}
+				if err == nil && len(resp) > 0 {
+					conn.WriteToUDP(resp, cAddr)
+				}
+			}(query, clientAddr)
+		}
+	}()
+
+	cleanup := func() {
+		close(stopChan)
+		conn.Close()
+	}
+	return cleanup, nil
+}
+
+func queryDNSOverTCP(dialer proxy.Dialer, upstream string, query []byte) ([]byte, error) {
+	tcpConn, err := dialer.Dial("tcp", upstream)
+	if err != nil {
+		return nil, err
+	}
+	defer tcpConn.Close()
+
+	tcpConn.SetDeadline(time.Now().Add(4 * time.Second))
+
+	qLen := uint16(len(query))
+	lenBuf := []byte{byte(qLen >> 8), byte(qLen & 0xFF)}
+
+	if _, err := tcpConn.Write(append(lenBuf, query...)); err != nil {
+		return nil, err
+	}
+
+	respLenBuf := make([]byte, 2)
+	if _, err := io.ReadFull(tcpConn, respLenBuf); err != nil {
+		return nil, err
+	}
+
+	respLen := (uint16(respLenBuf[0]) << 8) | uint16(respLenBuf[1])
+	resp := make([]byte, respLen)
+	if _, err := io.ReadFull(tcpConn, resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func getDefaultGateway() string {
@@ -158,4 +256,5 @@ func getDefaultGateway() string {
 	}
 	return ""
 }
+
 
