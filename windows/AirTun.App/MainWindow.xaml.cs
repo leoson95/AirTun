@@ -177,28 +177,31 @@ public sealed partial class MainWindow : Window
         SetTitleBar(AppTitleBar);
     }
 
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    private const int SW_RESTORE = 9;
+
     private void InitializeTray()
     {
         try
         {
-            var openItem = new MenuFlyoutItem { Text = Strings.TrayOpen };
-            openItem.Click += (_, _) =>
+            var openItem = new MenuFlyoutItem
             {
-                _appWindow?.Show();
-                if (_appWindow?.Presenter is OverlappedPresenter p)
-                {
-                    p.Restore();
-                }
-                this.Activate();
+                Text = Strings.TrayOpen,
+                Command = new RelayCommand(ShowAppWindow)
             };
+            openItem.Click += (_, _) => ShowAppWindow();
 
-            var exitItem = new MenuFlyoutItem { Text = Strings.TrayExit };
-            exitItem.Click += (_, _) =>
+            var exitItem = new MenuFlyoutItem
             {
-                _controller.Disconnect();
-                try { _trayIcon?.Dispose(); } catch { }
-                Application.Current.Exit();
+                Text = Strings.TrayExit,
+                Command = new RelayCommand(ExitApp)
             };
+            exitItem.Click += (_, _) => ExitApp();
 
             var flyout = new MenuFlyout();
             flyout.Items.Add(openItem);
@@ -215,27 +218,10 @@ public sealed partial class MainWindow : Window
                 ToolTipText = "AirTun - Phone Internet Sharing",
                 Icon = icon,
                 ContextFlyout = flyout,
+                NoLeftClickDelay = true,
+                LeftClickCommand = new RelayCommand(ToggleAppWindow),
+                DoubleClickCommand = new RelayCommand(ShowAppWindow)
             };
-
-            _trayIcon.LeftClickCommand = new RelayCommand(() =>
-            {
-                if (_appWindow is not null)
-                {
-                    if (_appWindow.IsVisible)
-                    {
-                        _appWindow.Hide();
-                    }
-                    else
-                    {
-                        _appWindow.Show();
-                        if (_appWindow.Presenter is OverlappedPresenter p)
-                        {
-                            p.Restore();
-                        }
-                        this.Activate();
-                    }
-                }
-            });
 
             _trayIcon.ForceCreate();
         }
@@ -243,6 +229,58 @@ public sealed partial class MainWindow : Window
         {
             LocalLog.Add($"System Tray notice: {ex.Message}");
         }
+    }
+
+    private void ShowAppWindow()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            try
+            {
+                if (_appWindow is not null)
+                {
+                    _appWindow.Show();
+                    if (_appWindow.Presenter is OverlappedPresenter p)
+                    {
+                        p.Restore();
+                    }
+                }
+                this.Activate();
+                var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                ShowWindow(hwnd, SW_RESTORE);
+                SetForegroundWindow(hwnd);
+            }
+            catch (Exception ex)
+            {
+                LocalLog.Add($"ShowAppWindow: {ex.Message}");
+            }
+        });
+    }
+
+    private void ToggleAppWindow()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            if (_appWindow is not null && _appWindow.IsVisible)
+            {
+                _appWindow.Hide();
+            }
+            else
+            {
+                ShowAppWindow();
+            }
+        });
+    }
+
+    private void ExitApp()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            try { _controller.Disconnect(); } catch { }
+            try { _trayIcon?.Dispose(); } catch { }
+            try { Application.Current.Exit(); } catch { }
+            Environment.Exit(0);
+        });
     }
 
     private sealed class RelayCommand(Action execute) : System.Windows.Input.ICommand
@@ -375,17 +413,21 @@ public sealed partial class MainWindow : Window
             if (devices.Count > 0)
             {
                 _selectedDevice = devices[0];
-                TextDetectedPhoneName.Text = _selectedDevice.DeviceName;
+                TextDetectedPhoneName.Text = "📱 " + _selectedDevice.DeviceName;
                 TextDetectedPhoneIp.Text = $"IP: {_selectedDevice.Host}:{_selectedDevice.PortNumber}";
-                TextSignalStatus.Text = "● Ready";
+                if (!string.IsNullOrWhiteSpace(_selectedDevice.Pin))
+                {
+                    InputPin.Text = _selectedDevice.Pin;
+                }
+                TextSignalStatus.Text = Strings.IsPersian ? "● آماده اتصال" : "● Ready";
                 BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["AccentSoftBrush"];
             }
             else
             {
                 _selectedDevice = null;
-                TextDetectedPhoneName.Text = Strings.SearchingDevices;
-                TextDetectedPhoneIp.Text = "Turn on hotspot / USB and tap START in Android App";
-                TextSignalStatus.Text = "📡 Scanning";
+                TextDetectedPhoneName.Text = Strings.IsPersian ? "در حال جستجوی گوشی..." : "Searching for Phone...";
+                TextDetectedPhoneIp.Text = Strings.IsPersian ? "هات‌اسپات را روشن کرده و دکمه شروع را در گوشی بزنید" : "Turn on hotspot / Wi-Fi and tap START in Android App";
+                TextSignalStatus.Text = Strings.IsPersian ? "📡 در حال اسکن" : "📡 Scanning";
                 BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
             }
         });
@@ -538,13 +580,19 @@ public sealed partial class MainWindow : Window
         var pin = InputPin.Text.Trim();
         if (pin.Length != 4)
         {
-            TextPinHint.Text = "⚠️ Please enter full 4 digits";
+            TextPinHint.Text = Strings.IsPersian ? "⚠️ لطفاً پین ۴ رقمی کامل را وارد کنید" : "⚠️ Please enter full 4 digits";
             return;
         }
 
-        var host = _selectedDevice?.Host ?? "192.168.43.1";
-        var port = _selectedDevice?.PortNumber ?? 10808;
-        var deviceName = _selectedDevice?.DeviceName ?? "Android Phone";
+        if (_selectedDevice is null)
+        {
+            TextPinHint.Text = Strings.IsPersian ? "⚠️ هیچ گوشی‌ای یافت نشد. ابتدا در گوشی دکمه شروع را بزنید." : "⚠️ No phone detected yet. Tap START on Android phone.";
+            return;
+        }
+
+        var host = _selectedDevice.Host;
+        var port = _selectedDevice.PortNumber;
+        var deviceName = _selectedDevice.DeviceName;
 
         TextPinHint.Text = Strings.PinHint;
         await _controller.ConnectAsync(host, port, pin, deviceName);
@@ -563,10 +611,14 @@ public sealed partial class MainWindow : Window
     private async void BtnErrorRetry_Click(object sender, RoutedEventArgs e)
     {
         var pin = InputPin.Text.Trim();
-        var host = _selectedDevice?.Host ?? "192.168.43.1";
-        var port = _selectedDevice?.PortNumber ?? 10808;
-        var deviceName = _selectedDevice?.DeviceName ?? "Android Phone";
-        await _controller.ConnectAsync(host, port, pin, deviceName);
+        if (_selectedDevice is not null)
+        {
+            await _controller.ConnectAsync(_selectedDevice.Host, _selectedDevice.PortNumber, pin, _selectedDevice.DeviceName);
+        }
+        else
+        {
+            _controller.Disconnect();
+        }
     }
 
     private void SwitchBypassDomestic_Toggled(object sender, RoutedEventArgs e)

@@ -38,7 +38,8 @@
             <SolidColorBrush x:Key="LabelSecondary" Color="#8B949E" />
 
             <!-- Typography -->
-            <FontFamily x:Key="FontSystem">Segoe UI Variable, Segoe UI, Tahoma</FontFamily>
+            <FontFamily x:Key="FontSystem">ms-appx:///Assets/Fonts/Vazirmatn-Regular.ttf#Vazirmatn, Vazirmatn, Segoe UI Variable, Segoe UI, Tahoma</FontFamily>
+            <FontFamily x:Key="FontBold">ms-appx:///Assets/Fonts/Vazirmatn-Bold.ttf#Vazirmatn, Vazirmatn, Segoe UI Variable, Segoe UI, Tahoma</FontFamily>
             <FontFamily x:Key="FontMono">Cascadia Code, Consolas, Courier New</FontFamily>
 
             <Style x:Key="TitleText" TargetType="TextBlock">

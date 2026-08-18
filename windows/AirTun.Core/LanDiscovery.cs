@@ -18,6 +18,7 @@ public sealed class LanDiscovery : IDisposable
         string Host,
         int PortNumber,
         string DeviceName,
+        string? Pin,
         bool PinRequired,
         DateTimeOffset Seen
     )
@@ -182,6 +183,7 @@ public sealed class LanDiscovery : IDisposable
             var deviceName = root.TryGetProperty("device", out var dProp) ? dProp.GetString() : "Android Device";
             var portNumber = root.TryGetProperty("port", out var pProp) ? pProp.GetInt32() : AirTunConfig.DefaultSocksPort;
             var pinRequired = !root.TryGetProperty("pin_required", out var pinProp) || pinProp.GetBoolean();
+            var pin = root.TryGetProperty("pin", out var pinValProp) ? pinValProp.GetString() : null;
 
             var host = senderIp;
             if (root.TryGetProperty("host", out var hostProp) && !string.IsNullOrWhiteSpace(hostProp.GetString()))
@@ -195,6 +197,7 @@ public sealed class LanDiscovery : IDisposable
                 Host: host,
                 PortNumber: portNumber,
                 DeviceName: deviceName ?? "Android Device",
+                Pin: pin,
                 PinRequired: pinRequired,
                 Seen: seen
             );
@@ -218,7 +221,7 @@ public sealed class LanDiscovery : IDisposable
     }
 
     private static bool SameToUser(Device a, Device b) =>
-        a.Host == b.Host && a.PortNumber == b.PortNumber && a.DeviceName == b.DeviceName && a.PinRequired == b.PinRequired;
+        a.Host == b.Host && a.PortNumber == b.PortNumber && a.DeviceName == b.DeviceName && a.Pin == b.Pin && a.PinRequired == b.PinRequired;
 
     internal void Expire()
     {

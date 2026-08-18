@@ -26,6 +26,7 @@ import java.net.NetworkInterface
 class AirTunBeacon(
     private val deviceName: String,
     private val socksPort: Int = AirTunConfig.DEFAULT_SOCKS_PORT,
+    private val pin: String? = null,
     private val pinRequired: Boolean = true,
     private val intervalMs: Long = AirTunConfig.BEACON_INTERVAL_MS,
     private val port: Int = AirTunConfig.DEFAULT_BEACON_PORT,
@@ -120,6 +121,9 @@ class AirTunBeacon(
             put("device", deviceName.take(64))
             put("port", if (socksPort in 1..65535) socksPort else AirTunConfig.DEFAULT_SOCKS_PORT)
             put("pin_required", pinRequired)
+            if (!pin.isNullOrEmpty()) {
+                put("pin", pin)
+            }
         }
         return json.toString().toByteArray(Charsets.UTF_8)
     }

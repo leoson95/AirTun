@@ -158,6 +158,7 @@ class SharingService : Service() {
         val announcer = AirTunBeacon(
             deviceName = deviceName,
             socksPort = AirTunConfig.DEFAULT_SOCKS_PORT,
+            pin = pin,
             pinRequired = true,
         ).also { it.start() }
         beacon = announcer
