@@ -125,12 +125,27 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
     public WinTunTunnelSession.IProcessHandle Start(string arguments)
     {
         var pipeName = "airtun-tun-" + Guid.NewGuid().ToString("N");
-        var pipe = new NamedPipeServerStream(
+        var pipeSecurity = new System.IO.Pipes.PipeSecurity();
+        pipeSecurity.AddAccessRule(new System.IO.Pipes.PipeAccessRule(
+            new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.WorldSid, null),
+            System.IO.Pipes.PipeAccessRights.ReadWrite,
+            System.Security.AccessControl.AccessControlType.Allow
+        ));
+        pipeSecurity.AddAccessRule(new System.IO.Pipes.PipeAccessRule(
+            new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.AuthenticatedUserSid, null),
+            System.IO.Pipes.PipeAccessRights.ReadWrite,
+            System.Security.AccessControl.AccessControlType.Allow
+        ));
+
+        var pipe = System.IO.Pipes.NamedPipeServerStreamAcl.Create(
             pipeName,
-            PipeDirection.InOut,
-            maxNumberOfServerInstances: 1,
-            PipeTransmissionMode.Byte,
-            PipeOptions.Asynchronous
+            System.IO.Pipes.PipeDirection.InOut,
+            System.IO.Pipes.NamedPipeServerStream.MaxAllowedServerInstances,
+            System.IO.Pipes.PipeTransmissionMode.Byte,
+            System.IO.Pipes.PipeOptions.Asynchronous,
+            inBufferSize: 4096,
+            outBufferSize: 4096,
+            pipeSecurity
         );
 
         Process process;

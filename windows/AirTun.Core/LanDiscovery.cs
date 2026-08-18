@@ -122,6 +122,14 @@ public sealed class LanDiscovery : IDisposable
                 var broadcast = BroadcastFor(unicast.Address, unicast.IPv4Mask);
                 if (broadcast is not null && seen.Add(broadcast.ToString())) yield return broadcast;
             }
+
+            foreach (var gateway in properties.GatewayAddresses)
+            {
+                if (gateway.Address.AddressFamily == AddressFamily.InterNetwork && seen.Add(gateway.Address.ToString()))
+                {
+                    yield return gateway.Address;
+                }
+            }
         }
     }
 

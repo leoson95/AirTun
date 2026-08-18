@@ -3,6 +3,7 @@ module airtun-tun
 go 1.26.5
 
 require (
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ajg/form v1.7.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/go-chi/chi/v5 v5.3.0 // indirect

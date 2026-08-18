@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Microsoft/go-winio"
 	"github.com/xjasonlyu/tun2socks/v2/engine"
 )
 
@@ -28,16 +29,23 @@ func main() {
 		os.Exit(1)
 	}
 
-	var pipeConn *os.File
+	var pipeConn net.Conn
 	var pipeWriter *bufio.Writer
 	if *pipeFlag != "" {
 		pipePath := `\\.\pipe\` + *pipeFlag
 		var err error
-		pipeConn, err = os.OpenFile(pipePath, os.O_RDWR, 0)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Could not open pipe %s: %v\n", pipePath, err)
-		} else {
+		for i := 0; i < 50; i++ {
+			timeout := 500 * time.Millisecond
+			pipeConn, err = winio.DialPipe(pipePath, &timeout)
+			if err == nil {
+				break
+			}
+			time.Sleep(100 * time.Millisecond)
+		}
+		if pipeConn != nil {
 			pipeWriter = bufio.NewWriter(pipeConn)
+		} else {
+			fmt.Fprintf(os.Stderr, "Could not open pipe %s: %v\n", pipePath, err)
 		}
 	}
 
@@ -71,7 +79,7 @@ func main() {
 	engine.Insert(key)
 	engine.Start()
 
-	// Wait briefly for WinTun adapter creation
+	// Wait for WinTun adapter creation
 	time.Sleep(500 * time.Millisecond)
 
 	// Configure TUN IP Address
