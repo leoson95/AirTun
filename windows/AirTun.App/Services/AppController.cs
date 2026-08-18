@@ -155,9 +155,10 @@ public sealed class AppController : IDisposable
 
         _ = Task.Run(async () =>
         {
-            long mockBytesUp = 0;
-            long mockBytesDown = 0;
             int consecutiveFailures = 0;
+            // Wait a brief moment for adapter to be ready, then read baseline
+            await Task.Delay(500, token).ConfigureAwait(false);
+            var (baseUp, baseDown) = ReadAirTunInterfaceBytes();
 
             while (!token.IsCancellationRequested)
             {
@@ -178,16 +179,39 @@ public sealed class AppController : IDisposable
                     consecutiveFailures = 0;
                 }
 
+                var (rawUp, rawDown) = ReadAirTunInterfaceBytes();
+                if (baseUp == 0 && rawUp > 0) baseUp = rawUp;
+                if (baseDown == 0 && rawDown > 0) baseDown = rawDown;
+
+                long curBytesUp = Math.Max(0, rawUp - baseUp);
+                long curBytesDown = Math.Max(0, rawDown - baseDown);
+
                 var ping = await _stats.MeasurePingAsync(host, 1200).ConfigureAwait(false);
-                mockBytesUp += Random.Shared.Next(1024, 40960);
-                mockBytesDown += Random.Shared.Next(4096, 120480);
-                var sample = _stats.ComputeSample(mockBytesUp, mockBytesDown, ping > 0 ? ping : 18);
+                var sample = _stats.ComputeSample(curBytesUp, curBytesDown, ping > 0 ? ping : 18);
                 StatsSampled?.Invoke(sample);
 
-                try { await Task.Delay(1500, token).ConfigureAwait(false); }
+                try { await Task.Delay(1000, token).ConfigureAwait(false); }
                 catch { break; }
             }
         }, token);
+    }
+
+    private static (long bytesSent, long bytesRecv) ReadAirTunInterfaceBytes()
+    {
+        try
+        {
+            var nic = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
+                .FirstOrDefault(n => n.Name.Contains("AirTun", StringComparison.OrdinalIgnoreCase)
+                                  || n.Description.Contains("AirTun", StringComparison.OrdinalIgnoreCase)
+                                  || n.Description.Contains("tun2socks", StringComparison.OrdinalIgnoreCase));
+            if (nic != null)
+            {
+                var stats = nic.GetIPv4Statistics();
+                return (stats.BytesSent, stats.BytesReceived);
+            }
+        }
+        catch { }
+        return (0, 0);
     }
 
     private static async Task<bool> CheckHostHealthAsync(string host, int port, int timeoutMs)
