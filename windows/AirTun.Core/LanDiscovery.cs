@@ -195,10 +195,18 @@ public sealed class LanDiscovery : IDisposable
             if (root.TryGetProperty("app", out var appProp) && appProp.GetString() != AirTunConfig.AppId)
                 return false;
 
+            // If this is a probe request datagram, ignore it (do not parse as a device beacon)
+            if (root.TryGetProperty("probe", out _))
+                return false;
+
             if (!root.TryGetProperty("v", out var vProp) || vProp.GetInt32() != Version)
                 return false;
 
-            var deviceName = root.TryGetProperty("device", out var dProp) ? dProp.GetString() : "Android Device";
+            // A valid device beacon MUST have a device name
+            if (!root.TryGetProperty("device", out var dProp) || string.IsNullOrWhiteSpace(dProp.GetString()))
+                return false;
+
+            var deviceName = dProp.GetString()!;
             var portNumber = root.TryGetProperty("port", out var pProp) ? pProp.GetInt32() : AirTunConfig.DefaultSocksPort;
             var pinRequired = !root.TryGetProperty("pin_required", out var pinProp) || pinProp.GetBoolean();
             var pin = root.TryGetProperty("pin", out var pinValProp) ? pinValProp.GetString() : null;
@@ -207,6 +215,10 @@ public sealed class LanDiscovery : IDisposable
             var host = !string.IsNullOrWhiteSpace(senderIp) ? senderIp : (root.TryGetProperty("host", out var hostProp) ? hostProp.GetString() : null);
 
             if (string.IsNullOrWhiteSpace(host)) return false;
+
+            // Ignore local machine's own IP addresses so the PC never discovers itself
+            if (IsLocalMachineAddress(host)) return false;
+
 
 
             device = new Device(
@@ -236,8 +248,28 @@ public sealed class LanDiscovery : IDisposable
         if (changed) Notify();
     }
 
+    private static bool IsLocalMachineAddress(string ip)
+    {
+        if (ip == "127.0.0.1" || ip == "localhost" || ip == "::1") return true;
+        try
+        {
+            var interfaces = NetworkInterface.GetAllNetworkInterfaces();
+            foreach (var nic in interfaces)
+            {
+                var props = nic.GetIPProperties();
+                foreach (var unicast in props.UnicastAddresses)
+                {
+                    if (unicast.Address.ToString() == ip) return true;
+                }
+            }
+        }
+        catch { }
+        return false;
+    }
+
     private static bool SameToUser(Device a, Device b) =>
         a.Host == b.Host && a.PortNumber == b.PortNumber && a.DeviceName == b.DeviceName && a.Pin == b.Pin && a.PinRequired == b.PinRequired;
+
 
     internal void Expire()
     {
