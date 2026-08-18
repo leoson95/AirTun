@@ -37,3 +37,6 @@ windows/publish/
 .idea/
 .vscode/
 *.iml
+*.binlog
+*.py
+
