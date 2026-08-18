@@ -124,8 +124,8 @@ class AirTunBeacon(
             if (!pin.isNullOrEmpty()) {
                 put("pin", pin)
             }
-            // Include phone's real IP so Windows doesn't use virtual adapter IP
-            val hostIp = getLocalIpAddress()
+            // Include phone's real LAN IP (filtered from Wi-Fi / Hotspot interface, avoiding VPN tun/rmnet)
+            val hostIp = LocalAddress.findAdvertisableIpv4()
             if (!hostIp.isNullOrEmpty()) {
                 put("host", hostIp)
             }
@@ -133,14 +133,6 @@ class AirTunBeacon(
         return json.toString().toByteArray(Charsets.UTF_8)
     }
 
-    private fun getLocalIpAddress(): String? = try {
-        NetworkInterface.getNetworkInterfaces().toList()
-            .filter { it.isUp && !it.isLoopback }
-            .flatMap { it.inetAddresses.toList() }
-            .filterIsInstance<java.net.Inet4Address>()
-            .firstOrNull { !it.isLoopbackAddress }
-            ?.hostAddress
-    } catch (_: Exception) { null }
 
     private fun sendBroadcast(socket: DatagramSocket, bytes: ByteArray) {
         val targetPort = if (port in 1..65535) port else AirTunConfig.DEFAULT_BEACON_PORT

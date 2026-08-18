@@ -203,13 +203,11 @@ public sealed class LanDiscovery : IDisposable
             var pinRequired = !root.TryGetProperty("pin_required", out var pinProp) || pinProp.GetBoolean();
             var pin = root.TryGetProperty("pin", out var pinValProp) ? pinValProp.GetString() : null;
 
-            var host = senderIp;
-            if (root.TryGetProperty("host", out var hostProp) && !string.IsNullOrWhiteSpace(hostProp.GetString()))
-            {
-                host = hostProp.GetString();
-            }
+            // Always prefer senderIp because it represents the actual physical LAN route where the UDP packet arrived
+            var host = !string.IsNullOrWhiteSpace(senderIp) ? senderIp : (root.TryGetProperty("host", out var hostProp) ? hostProp.GetString() : null);
 
             if (string.IsNullOrWhiteSpace(host)) return false;
+
 
             device = new Device(
                 Host: host,

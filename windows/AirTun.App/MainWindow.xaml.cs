@@ -49,14 +49,18 @@ public sealed partial class MainWindow : Window
     [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
     private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
 
+    [DllImport("user32.dll")]
+    private static extern uint GetDpiForWindow(IntPtr hWnd);
+
     public MainWindow()
     {
         this.InitializeComponent();
         this.Title = "AirTun";
 
-        ConfigureWindow(420, 680);
+        ConfigureWindow(440, 700);
         InitializeTray();
         InitializeTrafficGraph();
+
 
         _controller.StateChanged += OnStateChanged;
         _controller.DevicesChanged += OnDevicesChanged;
@@ -144,12 +148,20 @@ public sealed partial class MainWindow : Window
                 try { _appWindow.SetIcon(appIconPath); } catch { }
             }
 
-            _appWindow.Resize(new Windows.Graphics.SizeInt32(width, height));
+            uint dpi = 96;
+            try { dpi = GetDpiForWindow(hWnd); } catch { }
+            if (dpi < 96) dpi = 96;
+            double scale = dpi / 96.0;
+            int scaledW = (int)Math.Round(width * scale);
+            int scaledH = (int)Math.Round(height * scale);
+
+            _appWindow.Resize(new Windows.Graphics.SizeInt32(scaledW, scaledH));
             if (_appWindow.Presenter is OverlappedPresenter presenter)
             {
                 presenter.IsResizable = false;
                 presenter.IsMaximizable = false;
             }
+
 
             _appWindow.Closing += (sender, args) =>
             {
@@ -413,8 +425,8 @@ public sealed partial class MainWindow : Window
             if (devices.Count > 0)
             {
                 _selectedDevice = devices[0];
-                TextDetectedPhoneName.Text = "📱 " + _selectedDevice.DeviceName;
-                TextDetectedPhoneIp.Text = $"IP: {_selectedDevice.Host}:{_selectedDevice.PortNumber}";
+                TextDetectedPhoneName.Text = _selectedDevice.DeviceName;
+                TextDetectedPhoneIp.Text = $"{_selectedDevice.Host}:{_selectedDevice.PortNumber}";
                 if (!string.IsNullOrWhiteSpace(_selectedDevice.Pin))
                 {
                     InputPin.Text = _selectedDevice.Pin;
@@ -426,12 +438,13 @@ public sealed partial class MainWindow : Window
             {
                 _selectedDevice = null;
                 TextDetectedPhoneName.Text = Strings.IsPersian ? "در حال جستجوی گوشی..." : "Searching for Phone...";
-                TextDetectedPhoneIp.Text = Strings.IsPersian ? "هات‌اسپات را روشن کرده و دکمه شروع را در گوشی بزنید" : "Turn on hotspot / Wi-Fi and tap START in Android App";
+                TextDetectedPhoneIp.Text = Strings.IsPersian ? "هات‌اسپات یا وای‌فای را متصل کرده و دکمه شروع را در اپ بزنید" : "Connect to Wi-Fi / Hotspot and tap START in Android App";
                 TextSignalStatus.Text = Strings.IsPersian ? "📡 در حال اسکن" : "📡 Scanning";
                 BadgeSignal.Background = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
             }
         });
     }
+
 
     private void OnStatsSampled(TunnelStats.Sample traffic)
     {
