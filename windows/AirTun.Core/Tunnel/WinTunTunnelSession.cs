@@ -151,16 +151,15 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
         Process process;
         try
         {
-            // AirTun.exe runs as Administrator (via requireAdministrator manifest),
-            // so airtun-tun.exe inherits the token directly.
             var startInfo = new ProcessStartInfo(executablePath, $"{arguments} -pipe {pipeName}")
             {
-                UseShellExecute = false,
-                CreateNoWindow = true,
+                UseShellExecute = true,
+                Verb = "runas",
                 WindowStyle = ProcessWindowStyle.Hidden,
             };
             process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Process failed to start");
+
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
         {
