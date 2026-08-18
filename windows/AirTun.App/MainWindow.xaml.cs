@@ -171,6 +171,10 @@ public sealed partial class MainWindow : Window
                     _appWindow.Hide();
                     _trayIcon?.ShowNotification("AirTun", "Minimized to system tray. Active in background.");
                 }
+                else
+                {
+                    ExitApp();
+                }
             };
 
             _appWindow.Changed += (sender, args) =>

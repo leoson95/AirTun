@@ -269,7 +269,7 @@
                                 <TextBlock x:Name="TextBypassTitle" Text="Bypass Iranian Sites (.ir)" FontSize="17" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
                                 <TextBlock x:Name="TextBypassDesc" Text="Domestic domains and banks open directly without tunneling to save bandwidth." FontSize="13.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                             </StackPanel>
-                            <ToggleSwitch Grid.Column="1" x:Name="SwitchBypassDomestic" IsOn="True" Toggled="SwitchBypassDomestic_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                            <ToggleSwitch Grid.Column="1" x:Name="SwitchBypassDomestic" IsOn="False" Toggled="SwitchBypassDomestic_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
                         </Grid>
                     </Border>
 
@@ -374,7 +374,7 @@
                                     <TextBlock x:Name="TextCloseToTrayTitle" Text="Minimize to Tray on Close (X)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
                                     <TextBlock x:Name="TextCloseToTrayDesc" Text="Keep connection active in background when window is closed." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <ToggleSwitch Grid.Column="1" x:Name="SwitchCloseToTray" IsOn="True" Toggled="SwitchCloseToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchCloseToTray" IsOn="False" Toggled="SwitchCloseToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
                             </Grid>
 
                             <!-- Minimize to Tray Switch -->

@@ -5,8 +5,8 @@ namespace AirTun.Core.Settings;
 
 public sealed class AppSettings
 {
-    public bool BypassDomestic { get; set; } = true;
-    public bool CloseToTray { get; set; } = true;
+    public bool BypassDomestic { get; set; } = false;
+    public bool CloseToTray { get; set; } = false;
     public bool MinimizeToTray { get; set; } = false;
     public bool StartWithWindows { get; set; } = false;
     public string DnsProvider { get; set; } = "1.1.1.1";
