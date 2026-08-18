@@ -52,9 +52,9 @@ public sealed class WinTunTunnelSession(WinTunTunnelSession.IProcessHost process
         {
             return Result.Fail("ERR_ELEVATION_DECLINED");
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            return Result.Fail("ERR_TUNNEL_START_FAILED");
+            return Result.Fail($"ERR_TUNNEL_START_FAILED ({ex.Message})");
         }
 
         var failure = WaitForReady(tunnel);
@@ -125,22 +125,18 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
     public WinTunTunnelSession.IProcessHandle Start(string arguments)
     {
         var pipeName = "airtun-tun-" + Guid.NewGuid().ToString("N");
+
         var pipeSecurity = new System.IO.Pipes.PipeSecurity();
         pipeSecurity.AddAccessRule(new System.IO.Pipes.PipeAccessRule(
             new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.WorldSid, null),
-            System.IO.Pipes.PipeAccessRights.ReadWrite,
-            System.Security.AccessControl.AccessControlType.Allow
-        ));
-        pipeSecurity.AddAccessRule(new System.IO.Pipes.PipeAccessRule(
-            new System.Security.Principal.SecurityIdentifier(System.Security.Principal.WellKnownSidType.AuthenticatedUserSid, null),
-            System.IO.Pipes.PipeAccessRights.ReadWrite,
+            System.IO.Pipes.PipeAccessRights.FullControl,
             System.Security.AccessControl.AccessControlType.Allow
         ));
 
         var pipe = System.IO.Pipes.NamedPipeServerStreamAcl.Create(
             pipeName,
             System.IO.Pipes.PipeDirection.InOut,
-            System.IO.Pipes.NamedPipeServerStream.MaxAllowedServerInstances,
+            1,
             System.IO.Pipes.PipeTransmissionMode.Byte,
             System.IO.Pipes.PipeOptions.Asynchronous,
             inBufferSize: 4096,
@@ -159,7 +155,6 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
             };
             process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("Process failed to start");
-
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == ErrorCancelled)
         {
@@ -172,6 +167,7 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
             throw;
         }
 
+        // Wait for elevated child to connect to our pipe
         try
         {
             var connectionTask = pipe.WaitForConnectionAsync();
@@ -179,13 +175,9 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
             while (!connectionTask.Wait(TimeSpan.FromMilliseconds(200)))
             {
                 if (process.HasExited)
-                {
-                    throw new InvalidOperationException($"Tunnel process exited early with code {process.ExitCode}");
-                }
+                    throw new InvalidOperationException($"Tunnel process exited with code {process.ExitCode}");
                 if (DateTimeOffset.UtcNow > deadline)
-                {
-                    throw new TimeoutException("Tunnel process pipe timed out");
-                }
+                    throw new TimeoutException("Timed out waiting for tunnel pipe connection");
             }
         }
         catch
@@ -199,7 +191,8 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
         return new TunnelProcessHandle(process, pipe);
     }
 
-    private sealed class TunnelProcessHandle(Process process, NamedPipeServerStream pipe) : WinTunTunnelSession.IProcessHandle
+    private sealed class TunnelProcessHandle(Process process, System.IO.Pipes.NamedPipeServerStream pipe)
+        : WinTunTunnelSession.IProcessHandle
     {
         private readonly StreamWriter _writer = new(pipe) { AutoFlush = true, NewLine = "\n" };
         private readonly StreamReader _reader = new(pipe);
@@ -211,12 +204,7 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
         {
             try
             {
-                pipe.ReadTimeout = 1000;
                 return _reader.ReadLine();
-            }
-            catch (TimeoutException)
-            {
-                return string.Empty;
             }
             catch
             {
@@ -224,7 +212,11 @@ public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTun
             }
         }
 
-        public void CloseInput() => pipe.Dispose();
+        public void CloseInput()
+        {
+            try { _writer.Close(); } catch { }
+        }
+
         public bool WaitForExit(TimeSpan timeout) => process.WaitForExit((int)timeout.TotalMilliseconds);
         public void Kill() => process.Kill(entireProcessTree: true);
 
