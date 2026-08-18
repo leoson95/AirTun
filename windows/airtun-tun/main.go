@@ -82,11 +82,10 @@ func main() {
 	// Wait for WinTun adapter creation
 	time.Sleep(500 * time.Millisecond)
 
-	// Configure TUN IP Address and Gateway
+	// Configure TUN IP Address
 	ipParts := strings.Split(*tunAddrFlag, "/")
 	tunIP := "10.254.1.2"
 	tunMask := "255.255.255.0"
-	tunGW := "10.254.1.1"
 	if len(ipParts) > 0 && ipParts[0] != "" {
 		tunIP = ipParts[0]
 	}
@@ -94,8 +93,8 @@ func main() {
 	// Find physical default gateway for bypass route
 	defaultGW := getDefaultGateway()
 
-	// 1. Assign IP address and default gateway to AirTun adapter
-	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP, tunMask, tunGW, "1").Run()
+	// 1. Assign IP address to AirTun adapter (without fake gateway to avoid ARP timeouts)
+	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP, tunMask, "none").Run()
 
 	// 2. Set DNS servers on AirTun adapter
 	exec.Command("netsh", "interface", "ip", "set", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", "1.1.1.1").Run()
@@ -110,9 +109,9 @@ func main() {
 		}
 	}
 
-	// 4. Add dual /1 default routes to direct all system IPv4 traffic into the TUN adapter
-	exec.Command("route", "add", "0.0.0.0", "mask", "128.0.0.0", tunGW, "metric", "1").Run()
-	exec.Command("route", "add", "128.0.0.0", "mask", "128.0.0.0", tunGW, "metric", "1").Run()
+	// 4. Add dual /1 default routes on-link to direct all system IPv4 traffic into the TUN adapter
+	exec.Command("route", "add", "0.0.0.0", "mask", "128.0.0.0", tunIP, "metric", "1").Run()
+	exec.Command("route", "add", "128.0.0.0", "mask", "128.0.0.0", tunIP, "metric", "1").Run()
 
 	// Signal READY to parent process
 	sendLine("READY")

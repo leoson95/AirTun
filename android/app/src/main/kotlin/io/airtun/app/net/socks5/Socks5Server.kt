@@ -2,6 +2,7 @@ package io.airtun.app.net.socks5
 
 import android.util.Log
 import io.airtun.app.core.AirTunConfig
+import io.airtun.app.net.LocalAddress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -224,7 +225,10 @@ class Socks5Server(
                         sendReply(clientOut, 0x01)
                         return
                     }
-                    sendReply(clientOut, 0x00, client.localAddress, relay.boundPort)
+                    val bindAddr = (client.localAddress as? Inet4Address)
+                        ?: LocalAddress.findAdvertisableIpv4()?.let { try { InetAddress.getByName(it) } catch (_: Exception) { null } }
+                        ?: InetAddress.getByName("0.0.0.0")
+                    sendReply(clientOut, 0x00, bindAddr, relay.boundPort)
 
                     try {
                         val dummy = ByteArray(64)
