@@ -20,6 +20,18 @@
 
 [**English**](#-english) • [**فارسی**](#-فارسی)
 
+<br/>
+
+### 📥 Downloads (دانلود آخرین نسخه منتشرشده)
+
+| Platform | Architecture | Package | Link |
+| :--- | :--- | :--- | :---: |
+| 💻 **Windows** | 64-bit (`x64`) | Standalone ZIP | [⬇️ **Download ZIP**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-windows-x64.zip) |
+| 📱 **Android** | ARM64 (`v8a` - Modern Devices) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-arm64-v8a.apk) |
+| 📱 **Android** | Universal (All Devices) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-universal.apk) |
+| 📱 **Android** | ARMv7 (`32-bit` - Legacy) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-armeabi-v7a.apk) |
+| 📦 **All Releases** | Multi-Platform | Checksums & Notes | [🏷️ **Release Notes (v1.0.0)**](https://github.com/omid-io/AirTun/releases/tag/v1.0.0) |
+
 </div>
 
 ---
