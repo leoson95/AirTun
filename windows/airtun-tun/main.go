@@ -83,8 +83,8 @@ func main() {
 	engine.Insert(key)
 	engine.Start()
 
-	// Wait for WinTun adapter creation
-	time.Sleep(500 * time.Millisecond)
+	// Wait and discover actual Wintun adapter name (handles AirTun, AirTun 2, AirTun 18, etc.)
+	actualTunName := findWintunInterface(*tunNameFlag)
 
 	// Configure TUN IP Address
 	ipParts := strings.Split(*tunAddrFlag, "/")
@@ -97,11 +97,11 @@ func main() {
 	// Find physical default gateway for bypass route
 	defaultGW := getDefaultGateway()
 
-	// 1. Assign IP address to AirTun adapter
-	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP, tunMask, "none").Run()
+	// 1. Assign IP address to actual AirTun adapter
+	exec.Command("netsh", "interface", "ip", "set", "address", fmt.Sprintf("name=%s", actualTunName), "static", tunIP, tunMask, "none").Run()
 
 	// 2. Set DNS servers on AirTun adapter to our local TCP-tunneled DNS forwarder (tunIP:53)
-	exec.Command("netsh", "interface", "ip", "set", "dns", fmt.Sprintf("name=\"%s\"", *tunNameFlag), "static", tunIP).Run()
+	exec.Command("netsh", "interface", "ip", "set", "dns", fmt.Sprintf("name=%s", actualTunName), "static", tunIP).Run()
 
 	// 3. Bypass direct route to phone host so tunnel traffic doesn't loop
 	if proxyHost != "" && proxyHost != "127.0.0.1" && proxyHost != "localhost" {
@@ -256,5 +256,21 @@ func getDefaultGateway() string {
 	}
 	return ""
 }
+
+func findWintunInterface(expectedName string) string {
+	for i := 0; i < 30; i++ {
+		out, err := exec.Command("powershell", "-NoProfile", "-Command",
+			fmt.Sprintf("(Get-NetAdapter -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceDescription -match 'Wintun' -or $_.Name -like '%s*' } | Select-Object -First 1).Name", expectedName)).Output()
+		if err == nil {
+			name := strings.TrimSpace(string(out))
+			if name != "" {
+				return name
+			}
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	return expectedName
+}
+
 
 
