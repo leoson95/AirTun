@@ -76,6 +76,7 @@ public sealed partial class MainWindow : Window
         _controller.StartDiscovery();
 
         SwitchBypassDomestic.IsOn = _controller.Settings.BypassDomestic;
+        SwitchBypassLan.IsOn = _controller.Settings.BypassLan;
         SwitchCloseToTray.IsOn = _controller.Settings.CloseToTray;
         SwitchMinimizeToTray.IsOn = _controller.Settings.MinimizeToTray;
         SwitchStartWithWindows.IsOn = _controller.Settings.StartWithWindows;
@@ -170,8 +171,8 @@ public sealed partial class MainWindow : Window
             {
                 presenter.IsResizable = false;
                 presenter.IsMaximizable = false;
+                presenter.SetBorderAndTitleBar(hasBorder: true, hasTitleBar: false);
             }
-
 
             _appWindow.Closing += (sender, args) =>
             {
@@ -198,9 +199,58 @@ public sealed partial class MainWindow : Window
                 }
             };
         }
+    }
 
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(AppTitleBar);
+    [DllImport("user32.dll")]
+    private static extern bool ReleaseCapture();
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+
+    private const int WM_NCLBUTTONDOWN = 0xA1;
+    private const int HT_CAPTION = 0x2;
+
+    private void AppTitleBar_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        if (e.GetCurrentPoint(AppTitleBar).Properties.IsLeftButtonPressed)
+        {
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            ReleaseCapture();
+            SendMessage(hWnd, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, IntPtr.Zero);
+        }
+    }
+
+    private void BtnWinMin_Click(object sender, RoutedEventArgs e)
+    {
+        if (_controller.Settings.MinimizeToTray)
+        {
+            _appWindow?.Hide();
+        }
+        else
+        {
+            if (_appWindow?.Presenter is OverlappedPresenter presenter)
+            {
+                presenter.Minimize();
+            }
+            else
+            {
+                var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+                ShowWindow(hWnd, 6 /* SW_MINIMIZE */);
+            }
+        }
+    }
+
+    private void BtnWinClose_Click(object sender, RoutedEventArgs e)
+    {
+        if (_controller.Settings.CloseToTray)
+        {
+            _appWindow?.Hide();
+            _trayIcon?.ShowNotification("AirTun", "Minimized to system tray. Active in background.");
+        }
+        else
+        {
+            ExitApp();
+        }
     }
 
     [DllImport("user32.dll")]
@@ -351,21 +401,39 @@ public sealed partial class MainWindow : Window
         TextStatus.Text = Strings.StatusIdle;
         TextTunSub.Text = Strings.ModeTunSubtitle;
         TextProxySub.Text = Strings.ModeProxySubtitle;
+        TextStatusMode.Text = _controller.ActiveMode == "tun" ? "⚡ TUN" : "🌐 Proxy";
 
+        // Quick Tips
+        TextQuickTipsLabel.Text = Strings.QuickTipsLabel;
+        TextTip1.Text = Strings.Tip1;
+        TextTip2.Text = Strings.Tip2;
+        TextTip3.Text = Strings.Tip3;
+
+        // Routing Tab
+        TextRoutingTitle.Text = Strings.RoutingTitle;
+        TextRoutingSubtitle.Text = Strings.RoutingSubtitle;
         TextBypassTitle.Text = Strings.BypassDomesticTitle;
         TextBypassDesc.Text = Strings.BypassDomesticDesc;
+        TextBypassLanTitle.Text = Strings.BypassLanTitle;
+        TextBypassLanDesc.Text = Strings.BypassLanDesc;
         TextCustomRulesHeader.Text = Strings.CustomRulesHeader;
+        TextCustomRulesDesc.Text = Strings.CustomRulesDesc;
         InputNewRulePattern.PlaceholderText = Strings.RulePatternPlaceholder;
+        BtnAddRule.Content = Strings.AddRuleAction;
 
+        // Connect / Discovery
         TextPinHint.Text = Strings.PinHint;
         BtnConnect.Content = Strings.ConnectAction;
         BtnDisconnect.Content = Strings.DisconnectAction;
         BtnErrorDismiss.Content = Strings.DismissAction;
         BtnErrorRetry.Content = Strings.RetryAction;
 
+        // Logs Tab
+        TextLogsHeader.Text = Strings.LogsHeader;
         BtnCopyLogs.Content = Strings.CopyLogsAction;
         BtnClearLogs.Content = Strings.ClearLogsAction;
 
+        // Settings Tab
         TextSettingsHeader.Text = Strings.SettingsHeader;
         TextStartWithWindowsTitle.Text = Strings.StartWithWindowsTitle;
         TextStartWithWindowsDesc.Text = Strings.StartWithWindowsDesc;
@@ -373,17 +441,16 @@ public sealed partial class MainWindow : Window
         TextCloseToTrayDesc.Text = Strings.CloseToTrayDesc;
         TextMinimizeToTrayTitle.Text = Strings.MinimizeToTrayTitle;
         TextMinimizeToTrayDesc.Text = Strings.MinimizeToTrayDesc;
+        TextGithubLabel.Text = Strings.GithubCardTitle;
+        BtnOpenGithub.Content = Strings.GithubCardAction;
 
         TextLiveTrafficHeader.Text = Strings.LiveTrafficHeader;
-        TextAboutDescription.Text = Strings.AboutDescription;
-        BtnOpenGithub.Content = Strings.OpenGithubAction;
-
         var flowDir = Strings.IsPersian ? FlowDirection.RightToLeft : FlowDirection.LeftToRight;
         TextBypassDesc.FlowDirection = flowDir;
+        TextBypassLanDesc.FlowDirection = flowDir;
         TextStartWithWindowsDesc.FlowDirection = flowDir;
         TextCloseToTrayDesc.FlowDirection = flowDir;
         TextMinimizeToTrayDesc.FlowDirection = flowDir;
-        TextAboutDescription.FlowDirection = flowDir;
         TextPinHint.FlowDirection = flowDir;
     }
 
@@ -578,16 +645,42 @@ public sealed partial class MainWindow : Window
 
         var accent = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
         var muted = (SolidColorBrush)Application.Current.Resources["LabelSecondary"];
+        var sunken = (Brush)Application.Current.Resources["FillSunken"];
+        var sunkenBorder = (Brush)Application.Current.Resources["NmSunkenBorderBrush"];
+        var transparent = new SolidColorBrush(Windows.UI.Color.FromArgb(0, 0, 0, 0));
 
         NavTextConnect.Foreground = tabIndex == 0 ? accent : muted;
         NavTextRouting.Foreground = tabIndex == 1 ? accent : muted;
         NavTextLogs.Foreground = tabIndex == 2 ? accent : muted;
         NavTextAbout.Foreground = tabIndex == 3 ? accent : muted;
 
-        NavTextConnect.FontWeight = tabIndex == 0 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-        NavTextRouting.FontWeight = tabIndex == 1 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-        NavTextLogs.FontWeight = tabIndex == 2 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
-        NavTextAbout.FontWeight = tabIndex == 3 ? Microsoft.UI.Text.FontWeights.Bold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextConnect.FontWeight = tabIndex == 0 ? Microsoft.UI.Text.FontWeights.ExtraBold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextRouting.FontWeight = tabIndex == 1 ? Microsoft.UI.Text.FontWeights.ExtraBold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextLogs.FontWeight = tabIndex == 2 ? Microsoft.UI.Text.FontWeights.ExtraBold : Microsoft.UI.Text.FontWeights.Normal;
+        NavTextAbout.FontWeight = tabIndex == 3 ? Microsoft.UI.Text.FontWeights.ExtraBold : Microsoft.UI.Text.FontWeights.Normal;
+
+        // Sunken active pill containers matching HTML
+        NavPillConnect.Background = tabIndex == 0 ? sunken : transparent;
+        NavPillConnect.BorderBrush = tabIndex == 0 ? sunkenBorder : transparent;
+        NavPillConnect.BorderThickness = new Thickness(tabIndex == 0 ? 1 : 0);
+
+        NavPillRouting.Background = tabIndex == 1 ? sunken : transparent;
+        NavPillRouting.BorderBrush = tabIndex == 1 ? sunkenBorder : transparent;
+        NavPillRouting.BorderThickness = new Thickness(tabIndex == 1 ? 1 : 0);
+
+        NavPillLogs.Background = tabIndex == 2 ? sunken : transparent;
+        NavPillLogs.BorderBrush = tabIndex == 2 ? sunkenBorder : transparent;
+        NavPillLogs.BorderThickness = new Thickness(tabIndex == 2 ? 1 : 0);
+
+        NavPillAbout.Background = tabIndex == 3 ? sunken : transparent;
+        NavPillAbout.BorderBrush = tabIndex == 3 ? sunkenBorder : transparent;
+        NavPillAbout.BorderThickness = new Thickness(tabIndex == 3 ? 1 : 0);
+
+        // SVG icon stroke color — active = cyan, inactive = muted
+        NavIconConnect.Stroke = tabIndex == 0 ? accent : muted;
+        NavIconRouting.Stroke = tabIndex == 1 ? accent : muted;
+        NavIconLogs.Stroke = tabIndex == 2 ? accent : muted;
+        NavIconAbout.Stroke = tabIndex == 3 ? accent : muted;
     }
 
     private void NavBtnConnect_Click(object sender, RoutedEventArgs e) => SelectTab(0);
@@ -610,18 +703,20 @@ public sealed partial class MainWindow : Window
     private void UpdateModeCardsUi()
     {
         var isTun = _controller.ActiveMode == "tun";
-        var accentBrush = (SolidColorBrush)Application.Current.Resources["AccentBrush"];
-        var hairlineBrush = (SolidColorBrush)Application.Current.Resources["HairlineBrush"];
-        var tertiaryFill = (SolidColorBrush)Application.Current.Resources["FillTertiary"];
-        var secondaryFill = (SolidColorBrush)Application.Current.Resources["FillSecondary"];
+        var accentBrush = (Brush)Application.Current.Resources["AccentBrush"];
+        var hairlineBrush = (Brush)Application.Current.Resources["NmBorderBrush"];
+        var selectedBrush = (Brush)Application.Current.Resources["NmCardSelectedBrush"];
+        var cardBrush = (Brush)Application.Current.Resources["NmCardBrush"];
 
         CardModeTun.BorderBrush = isTun ? accentBrush : hairlineBrush;
-        CardModeTun.BorderThickness = new Thickness(isTun ? 2 : 1);
-        CardModeTun.Background = isTun ? tertiaryFill : secondaryFill;
+        CardModeTun.BorderThickness = new Thickness(isTun ? 1.5 : 1);
+        CardModeTun.Background = isTun ? selectedBrush : cardBrush;
 
         CardModeProxy.BorderBrush = !isTun ? accentBrush : hairlineBrush;
-        CardModeProxy.BorderThickness = new Thickness(!isTun ? 2 : 1);
-        CardModeProxy.Background = !isTun ? tertiaryFill : secondaryFill;
+        CardModeProxy.BorderThickness = new Thickness(!isTun ? 1.5 : 1);
+        CardModeProxy.Background = !isTun ? selectedBrush : cardBrush;
+
+        TextStatusMode.Text = isTun ? "⚡ TUN" : "🌐 Proxy";
     }
 
     private async void BtnConnect_Click(object sender, RoutedEventArgs e)
@@ -678,6 +773,14 @@ public sealed partial class MainWindow : Window
         LocalLog.Add($"Bypass Domestic Sites set to: {SwitchBypassDomestic.IsOn}");
     }
 
+    private void SwitchBypassLan_Toggled(object sender, RoutedEventArgs e)
+    {
+        _controller.Routing.BypassLan = SwitchBypassLan.IsOn;
+        _controller.Settings.BypassLan = SwitchBypassLan.IsOn;
+        _controller.SaveCurrentSettings();
+        LocalLog.Add($"Bypass Local Network set to: {SwitchBypassLan.IsOn}");
+    }
+
     private void SwitchStartWithWindows_Toggled(object sender, RoutedEventArgs e)
     {
         var isEnabled = SwitchStartWithWindows.IsOn;
@@ -709,20 +812,13 @@ public sealed partial class MainWindow : Window
         var pattern = InputNewRulePattern.Text.Trim();
         if (string.IsNullOrWhiteSpace(pattern)) return;
 
-        var action = ComboNewRuleAction.SelectedIndex switch
-        {
-            1 => RuleAction.Proxy,
-            2 => RuleAction.Block,
-            _ => RuleAction.Direct,
-        };
-
         var type = pattern.StartsWith("*.") ? RuleType.DomainSuffix : RuleType.DomainFull;
-        _controller.Routing.AddCustomRule(new RoutingRule(type, pattern.TrimStart('*', '.'), action));
+        _controller.Routing.AddCustomRule(new RoutingRule(type, pattern.TrimStart('*', '.'), RuleAction.Direct));
         _controller.SaveCurrentSettings();
 
         InputNewRulePattern.Text = "";
         RefreshCustomRulesList();
-        LocalLog.Add($"Added custom rule: {pattern} -> {action}");
+        LocalLog.Add($"Added custom direct bypass rule: {pattern}");
     }
 
     private void BtnDeleteRule_Click(object sender, RoutedEventArgs e)
@@ -747,11 +843,14 @@ public sealed partial class MainWindow : Window
         ApplyStrings();
     }
 
-    private void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
+    private async void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
     {
         var package = new DataPackage();
         package.SetText(TextLogsViewer.Text);
         Clipboard.SetContent(package);
+        BtnCopyLogs.Content = Strings.CopyLogsFeedback;
+        await Task.Delay(1500);
+        BtnCopyLogs.Content = Strings.CopyLogsAction;
     }
 
     private void BtnClearLogs_Click(object sender, RoutedEventArgs e)

@@ -11,7 +11,7 @@
         </Grid.RowDefinitions>
 
         <!-- Custom Seamless Dark TitleBar -->
-        <Grid Grid.Row="0" x:Name="AppTitleBar" Background="Transparent" Padding="14,0,14,0">
+        <Grid Grid.Row="0" x:Name="AppTitleBar" Background="Transparent" Padding="14,0,14,0" PointerPressed="AppTitleBar_PointerPressed">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -19,16 +19,27 @@
 
             <!-- Brand Logo & Title -->
             <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                <Image Source="Assets/TitleBarLogo.png" Width="20" Height="20" VerticalAlignment="Center" />
-                <TextBlock Text="AirTun" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
-                <Border Background="{StaticResource FillTertiary}" CornerRadius="6" Padding="5,2" Margin="3,0,0,0" VerticalAlignment="Center">
+                <Image Source="Assets/TitleBarLogo.png" Height="20" VerticalAlignment="Center" Stretch="Uniform" />
+                <Border Background="{StaticResource FillTertiary}" CornerRadius="6" Padding="6,2" Margin="4,0,0,0" VerticalAlignment="Center" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                     <TextBlock Text="v1.0" FontSize="11" Foreground="{StaticResource LabelSecondary}" />
                 </Border>
             </StackPanel>
 
-            <!-- Language Toggle (Locked to Dark Theme) -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,135,0">
-                <Button x:Name="BtnLangToggle" Content="FA" Padding="10,3" Height="30" MinHeight="30" FontSize="12.5" Style="{StaticResource SecondaryButton}" Click="BtnLangToggle_Click" ToolTipService.ToolTip="Toggle Language (FA / EN)" />
+            <!-- Controls: Language Toggle + Beautiful System Buttons (Min, Close) -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <Button x:Name="BtnLangToggle" Content="FA" Padding="10,3" Height="30" MinHeight="30" FontSize="12" Style="{StaticResource SecondaryButton}" Click="BtnLangToggle_Click" ToolTipService.ToolTip="Toggle Language (FA / EN)" />
+
+                <!-- System Window Buttons (No Maximize) -->
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="2,0,0,0">
+                    <!-- Minimize button (Amber / Yellow) -->
+                    <Button x:Name="BtnWinMin" Width="26" Height="26" Padding="0" MinWidth="26" MinHeight="26" Background="Transparent" BorderThickness="0" Style="{StaticResource QuietButton}" Click="BtnWinMin_Click" ToolTipService.ToolTip="Minimize">
+                        <Border Width="12" Height="12" CornerRadius="6" Background="#FFBD2E" BorderBrush="#33000000" BorderThickness="1" />
+                    </Button>
+                    <!-- Close button (Red) -->
+                    <Button x:Name="BtnWinClose" Width="26" Height="26" Padding="0" MinWidth="26" MinHeight="26" Background="Transparent" BorderThickness="0" Style="{StaticResource QuietButton}" Click="BtnWinClose_Click" ToolTipService.ToolTip="Close">
+                        <Border Width="12" Height="12" CornerRadius="6" Background="#FF5F56" BorderBrush="#33000000" BorderThickness="1" />
+                    </Button>
+                </StackPanel>
             </StackPanel>
         </Grid>
 
@@ -36,50 +47,54 @@
         <Grid Grid.Row="1" Padding="18,10,18,10">
 
             <!-- TAB 1: CONNECT -->
-            <ScrollViewer x:Name="ViewTabConnect" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Visible">
-                <StackPanel Spacing="16">
+            <ScrollViewer x:Name="ViewTabConnect" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Visibility="Visible">
+                <StackPanel Spacing="12">
 
                     <!-- Status Hero Banner -->
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="16" Padding="18,14" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                    <Border Background="{StaticResource NmCardBrush}" CornerRadius="16" Padding="16,12" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <Ellipse x:Name="StatusDot" Width="12" Height="12" Fill="{StaticResource AccentBrush}" Margin="0,0,14,0" VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1" x:Name="TextStatus" Text="Ready to Connect" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
+                            <Ellipse x:Name="StatusDot" Width="12" Height="12" Fill="{StaticResource AccentBrush}" Margin="0,0,12,0" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" x:Name="TextStatus" Text="Ready to Connect" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
+                            <Border Grid.Column="2" x:Name="PillStatusMode" Background="{StaticResource FillSunken}" CornerRadius="8" Padding="9,3" VerticalAlignment="Center" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
+                                <TextBlock x:Name="TextStatusMode" Text="⚡ TUN" FontSize="11.5" FontWeight="Bold" Foreground="{StaticResource LabelSecondary}" />
+                            </Border>
                         </Grid>
                     </Border>
 
                     <!-- IDLE & DISCOVERY STATE -->
-                    <StackPanel x:Name="PanelIdle" Spacing="16">
+                    <StackPanel x:Name="PanelIdle" Spacing="12">
 
                         <!-- Mode Selector Segmented Cards -->
-                        <Grid ColumnSpacing="14">
+                        <Grid ColumnSpacing="12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="*" />
                             </Grid.ColumnDefinitions>
 
                             <!-- TUN Mode Card -->
-                            <Border Grid.Column="0" x:Name="CardModeTun" CornerRadius="16" Padding="16,16" Background="{StaticResource FillTertiary}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="2" PointerPressed="CardModeTun_PointerPressed" ToolTipService.ToolTip="Routes 100% of Windows traffic through virtual network adapter (Gaming, Telegram, Git, Docker, Browsers)">
-                                <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                    <TextBlock Text="⚡ TUN Mode" FontSize="17" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
-                                    <TextBlock x:Name="TextTunSub" Text="Games &amp; All Apps" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                            <Border Grid.Column="0" x:Name="CardModeTun" CornerRadius="16" Padding="12,14" Background="{StaticResource NmCardSelectedBrush}" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5" PointerPressed="CardModeTun_PointerPressed" ToolTipService.ToolTip="Routes 100% of Windows traffic through virtual network adapter (Gaming, Telegram, Git, Docker, Browsers)">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="⚡ TUN Mode" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="TextTunSub" Text="System-wide, games &amp; apps" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
 
                             <!-- Proxy Mode Card -->
-                            <Border Grid.Column="1" x:Name="CardModeProxy" CornerRadius="16" Padding="16,16" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1" PointerPressed="CardModeProxy_PointerPressed" ToolTipService.ToolTip="Configures Windows system proxy for browsers and standard HTTP/HTTPS web apps">
-                                <StackPanel Spacing="6" HorizontalAlignment="Center">
-                                    <TextBlock Text="🌐 Web Proxy" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" HorizontalAlignment="Center" />
-                                    <TextBlock x:Name="TextProxySub" Text="Browsers &amp; Web" FontSize="13.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                            <Border Grid.Column="1" x:Name="CardModeProxy" CornerRadius="16" Padding="12,14" Background="{StaticResource NmCardBrush}" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1" PointerPressed="CardModeProxy_PointerPressed" ToolTipService.ToolTip="Configures Windows system proxy for browsers and standard HTTP/HTTPS web apps">
+                                <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                    <TextBlock Text="🌐 Web Proxy" FontSize="15" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" HorizontalAlignment="Center" />
+                                    <TextBlock x:Name="TextProxySub" Text="Browsers &amp; web only" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
                         </Grid>
 
                         <!-- Auto-Discovered Phone Card - Premium Style -->
-                        <Border Background="{StaticResource FillSecondary}" CornerRadius="20" Padding="0" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                        <Border Background="{StaticResource NmCardBrush}" CornerRadius="20" Padding="0" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
                             <Grid>
                                 <!-- Subtle top accent line -->
                                 <Border Height="2" VerticalAlignment="Top" Background="{StaticResource AccentBrush}" />
@@ -92,14 +107,14 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <!-- Phone icon circle -->
-                                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12" Background="{StaticResource FillTertiary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1" Margin="0,0,12,0">
+                                        <Border Grid.Column="0" Width="44" Height="44" CornerRadius="12" Background="{StaticResource FillSunken}" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1" Margin="0,0,12,0">
                                             <TextBlock Text="📱" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                         </Border>
                                         <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
-                                            <TextBlock x:Name="TextDetectedPhoneName" Text="در حال جستجو..." FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock x:Name="TextDetectedPhoneIp" Text="هات‌اسپات را روشن کنید و در اپ START بزنید" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                            <TextBlock x:Name="TextDetectedPhoneName" Text="Searching for Phone..." FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock x:Name="TextDetectedPhoneIp" Text="Turn on Hotspot and tap START in mobile app" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Border Grid.Column="2" x:Name="BadgeSignal" Background="{StaticResource FillTertiary}" CornerRadius="10" Padding="10,5" VerticalAlignment="Center">
+                                        <Border Grid.Column="2" x:Name="BadgeSignal" Background="{StaticResource FillSunken}" CornerRadius="10" Padding="10,5" VerticalAlignment="Center" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                             <TextBlock x:Name="TextSignalStatus" Text="📡 Scanning" FontSize="12" Foreground="{StaticResource AccentBrush}" FontWeight="SemiBold" />
                                         </Border>
                                     </Grid>
@@ -114,20 +129,78 @@
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock x:Name="TextPinHint" Grid.Column="0" Text="پین ۴ رقمی امنیتی" FontSize="13" Foreground="{StaticResource LabelSecondary}" VerticalAlignment="Center" />
-                                            <TextBlock Grid.Column="1" Text="خودکار شناسایی می‌شود ✓" FontSize="11" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="TextPinHint" Grid.Column="0" Text="4-digit Security PIN" FontSize="13" Foreground="{StaticResource LabelSecondary}" VerticalAlignment="Center" />
+                                            <TextBlock x:Name="TextAutoDetected" Grid.Column="1" Text="Auto-detected ✓" FontSize="11" Foreground="{StaticResource AccentBrush}" VerticalAlignment="Center" />
                                         </Grid>
-                                        <TextBox x:Name="InputPin" PlaceholderText="----" MaxLength="4" FontSize="28" FontWeight="Bold" TextAlignment="Center" Height="58" FontFamily="{StaticResource FontMono}" CornerRadius="12" BorderBrush="{StaticResource HairlineBrush}" />
-                                        <Button x:Name="BtnConnect" Content="اتصال به گوشی" FontSize="16" FontWeight="Bold" Height="50" Style="{StaticResource PrimaryButton}" Click="BtnConnect_Click" />
+                                        <TextBox x:Name="InputPin" PlaceholderText="· · · ·" MaxLength="4" FontSize="28" FontWeight="Bold" TextAlignment="Center" Height="56" FontFamily="{StaticResource FontMono}" CornerRadius="12" BorderThickness="1" Foreground="{StaticResource AccentBrush}">
+                                            <TextBox.Resources>
+                                                <SolidColorBrush x:Key="TextControlBackground" Color="#090C12"/>
+                                                <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="#0C101A"/>
+                                                <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="#090C12"/>
+                                                <SolidColorBrush x:Key="TextControlForeground" Color="#00E5FF"/>
+                                                <SolidColorBrush x:Key="TextControlForegroundPointerOver" Color="#00E5FF"/>
+                                                <SolidColorBrush x:Key="TextControlForegroundFocused" Color="#00E5FF"/>
+                                                <SolidColorBrush x:Key="TextControlPlaceholderForeground" Color="#2D3F55"/>
+                                                <SolidColorBrush x:Key="TextControlPlaceholderForegroundPointerOver" Color="#2D3F55"/>
+                                                <SolidColorBrush x:Key="TextControlPlaceholderForegroundFocused" Color="#2D3F55"/>
+                                                <SolidColorBrush x:Key="TextControlBorderBrush" Color="#1A2230"/>
+                                                <SolidColorBrush x:Key="TextControlBorderBrushPointerOver" Color="#262F3F"/>
+                                                <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="#00E5FF"/>
+                                                <SolidColorBrush x:Key="TextControlSelectionHighlightColor" Color="#3300E5FF"/>
+                                            </TextBox.Resources>
+                                        </TextBox>
+                                        
+                                        <!-- Connect to Phone Button with Ambient Cyan Glow -->
+                                        <Grid Margin="0,4,0,0">
+                                            <Border Height="48" CornerRadius="14" Background="{StaticResource AccentBrush}" Opacity="0.35" Margin="2,4,2,-4" />
+                                            <Button x:Name="BtnConnect" Content="Connect to Phone" FontSize="16" FontWeight="ExtraBold" Height="48" Style="{StaticResource PrimaryButton}" Click="BtnConnect_Click" />
+                                        </Grid>
                                     </StackPanel>
                                 </StackPanel>
                             </Grid>
+                        </Border>
+
+                        <!-- Quick Tips Card -->
+                        <Border Background="{StaticResource NmCardBrush}" CornerRadius="16" Padding="16,14" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
+                            <StackPanel Spacing="10">
+                                <TextBlock x:Name="TextQuickTipsLabel" Text="QUICK TIPS" FontSize="11" FontWeight="Bold" Foreground="{StaticResource LabelSecondary}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="⚡" FontSize="13" Margin="0,0,10,0" VerticalAlignment="Top" />
+                                    <TextBlock Grid.Column="1" x:Name="TextTip1" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" LineHeight="18">
+                                        Use <Run FontWeight="Bold" Foreground="{StaticResource LabelPrimary}">TUN Mode</Run> for games and all-system routing.
+                                    </TextBlock>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="🌐" FontSize="13" Margin="0,0,10,0" VerticalAlignment="Top" />
+                                    <TextBlock Grid.Column="1" x:Name="TextTip2" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" LineHeight="18">
+                                        Use <Run FontWeight="Bold" Foreground="{StaticResource LabelPrimary}">Web Proxy</Run> for browser-only traffic.
+                                    </TextBlock>
+                                </Grid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="📡" FontSize="13" Margin="0,0,10,0" VerticalAlignment="Top" />
+                                    <TextBlock Grid.Column="1" x:Name="TextTip3" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" LineHeight="18">
+                                        Make sure <Run FontWeight="Bold" Foreground="{StaticResource LabelPrimary}">Hotspot</Run> is active on your phone.
+                                    </TextBlock>
+                                </Grid>
+                            </StackPanel>
                         </Border>
                     </StackPanel>
 
                     <!-- CONNECTED ACTIVE STATE -->
                     <StackPanel x:Name="PanelConnected" Spacing="10" Visibility="Collapsed">
-                        <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="16,13" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5">
+                        <Border Background="{StaticResource NmCardBrush}" CornerRadius="18" Padding="16,13" BorderBrush="{StaticResource AccentBrush}" BorderThickness="1.5">
                             <StackPanel Spacing="9">
                                 <!-- Endpoint & Badge -->
                                 <Grid>
@@ -139,13 +212,13 @@
                                         <TextBlock x:Name="TextConnectedDevice" Text="Connected to Phone" FontSize="19" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                                         <TextBlock x:Name="TextConnectedEndpoint" Text="192.168.43.1:10808 (TUN Mode)" FontSize="12.5" FontFamily="{StaticResource FontMono}" Foreground="{StaticResource LabelSecondary}" />
                                     </StackPanel>
-                                    <Border Grid.Column="1" Background="{StaticResource FillTertiary}" CornerRadius="8" Padding="10,4" VerticalAlignment="Center">
+                                    <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="8" Padding="10,4" VerticalAlignment="Center" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                         <TextBlock Text="● ACTIVE" FontSize="12" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
                                     </Border>
                                 </Grid>
 
                                 <!-- Outbound IP & Location -->
-                                <Border Background="{StaticResource FillSunken}" CornerRadius="12" Padding="12,7">
+                                <Border Background="{StaticResource FillSunken}" CornerRadius="12" Padding="12,7" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*" />
@@ -160,7 +233,7 @@
                                 </Border>
 
                                 <!-- LIVE TRAFFIC WAVEFORM / GRAPH -->
-                                <Border Background="{StaticResource FillSunken}" CornerRadius="12" Padding="12,7">
+                                <Border Background="{StaticResource FillSunken}" CornerRadius="12" Padding="12,7" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                     <StackPanel Spacing="5">
                                         <Grid>
                                             <Grid.ColumnDefinitions>
@@ -186,7 +259,7 @@
                                         </Grid>
 
                                         <!-- Canvas Graph Container -->
-                                        <Border Height="56" Background="{StaticResource FillSecondary}" CornerRadius="8" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
+                                        <Border Height="56" Background="{StaticResource FillSunken}" CornerRadius="8" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                             <Canvas x:Name="CanvasTrafficGraph" Height="56" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
                                         </Border>
                                     </StackPanel>
@@ -199,7 +272,7 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <Border Grid.Column="0" Background="{StaticResource FillSunken}" CornerRadius="12" Padding="10,7">
+                                    <Border Grid.Column="0" Background="{StaticResource FillSunken}" CornerRadius="12" Padding="10,7" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                         <StackPanel HorizontalAlignment="Center" Spacing="1">
                                             <TextBlock Text="↓ Download Rate" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
                                             <TextBlock x:Name="TextDownSpeed" Text="0 KB/s" FontSize="21" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
@@ -207,7 +280,7 @@
                                         </StackPanel>
                                     </Border>
 
-                                    <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="12" Padding="10,7">
+                                    <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="12" Padding="10,7" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                         <StackPanel HorizontalAlignment="Center" Spacing="1">
                                             <TextBlock Text="↑ Upload Rate" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
                                             <TextBlock x:Name="TextUpSpeed" Text="0 KB/s" FontSize="21" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" />
@@ -228,7 +301,7 @@
                             </StackPanel>
                         </Border>
 
-                        <Button x:Name="BtnDisconnect" Content="Disconnect" FontSize="15.5" FontWeight="SemiBold" Height="44" Background="{StaticResource DangerSoftBrush}" Foreground="{StaticResource DangerBrush}" BorderBrush="{StaticResource DangerBrush}" Style="{StaticResource ButtonBase}" Click="BtnDisconnect_Click" />
+                        <Button x:Name="BtnDisconnect" Content="Disconnect" FontSize="15.5" FontWeight="Bold" Height="44" Style="{StaticResource DangerButton}" Click="BtnDisconnect_Click" />
                     </StackPanel>
 
                     <!-- ERROR PANEL -->
@@ -254,62 +327,83 @@
             </ScrollViewer>
 
             <!-- TAB 2: ROUTING -->
-            <ScrollViewer x:Name="ViewTabRouting" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Spacing="18">
-                    <TextBlock Text="Smart Routing &amp; Rules" FontSize="22" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+            <ScrollViewer x:Name="ViewTabRouting" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="3">
+                        <TextBlock x:Name="TextRoutingTitle" Text="Smart Routing Rules" FontSize="18" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                        <TextBlock x:Name="TextRoutingSubtitle" Text="Direct connection without routing through proxy" FontSize="12" Foreground="{StaticResource LabelSecondary}" />
+                    </StackPanel>
 
-                    <!-- Iran Bypass Glass Card -->
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="18" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
-                        <Grid>
+                    <!-- Iran Bypass Card -->
+                    <Border Background="{StaticResource NmCardBrush}" CornerRadius="16" Padding="16,12" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
+                        <Grid FlowDirection="LeftToRight">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
-                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="4">
-                                <TextBlock x:Name="TextBypassTitle" Text="Bypass Iranian Sites (.ir)" FontSize="17" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
-                                <TextBlock x:Name="TextBypassDesc" Text="Domestic domains and banks open directly without tunneling to save bandwidth." FontSize="13.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                <TextBlock x:Name="TextBypassTitle" Text="Bypass Domestic Sites (.ir)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                                <TextBlock x:Name="TextBypassDesc" Text="Iranian banking &amp; national websites" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                             </StackPanel>
-                            <ToggleSwitch Grid.Column="1" x:Name="SwitchBypassDomestic" IsOn="False" Toggled="SwitchBypassDomestic_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                            <ToggleSwitch Grid.Column="1" x:Name="SwitchBypassDomestic" IsOn="True" Toggled="SwitchBypassDomestic_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="0" />
+                        </Grid>
+                    </Border>
+
+                    <!-- LAN Bypass Card -->
+                    <Border Background="{StaticResource NmCardBrush}" CornerRadius="16" Padding="16,12" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
+                        <Grid FlowDirection="LeftToRight">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                <TextBlock x:Name="TextBypassLanTitle" Text="Bypass Local Network (LAN)" FontSize="14.5" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                                <TextBlock x:Name="TextBypassLanDesc" Text="192.168.x, 10.x, 127.0.0.1" FontSize="12" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                            </StackPanel>
+                            <ToggleSwitch Grid.Column="1" x:Name="SwitchBypassLan" IsOn="True" Toggled="SwitchBypassLan_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="0" />
                         </Grid>
                     </Border>
 
                     <!-- Custom Rules Section -->
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="18" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
-                        <StackPanel Spacing="14">
-                            <TextBlock x:Name="TextCustomRulesHeader" Text="Custom Rules (Direct vs Proxy vs Block)" FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                    <Border Background="{StaticResource NmCardBrush}" CornerRadius="16" Padding="16" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
+                        <StackPanel Spacing="12">
+                            <StackPanel Spacing="2">
+                                <TextBlock x:Name="TextCustomRulesHeader" Text="Custom Bypass Rules" FontSize="14" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                                <TextBlock x:Name="TextCustomRulesDesc" Text="Add domains/IPs to bypass the tunnel:" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" />
+                            </StackPanel>
 
                             <!-- Add Rule Form -->
                             <Grid ColumnSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBox Grid.Column="0" x:Name="InputNewRulePattern" FontSize="14.5" PlaceholderText="Domain (e.g. digikala.com or *.ir)" Height="44" />
-                                <ComboBox Grid.Column="1" x:Name="ComboNewRuleAction" SelectedIndex="0" MinWidth="105" FontSize="14.5" Height="44">
-                                    <ComboBoxItem Content="Direct" />
-                                    <ComboBoxItem Content="Proxy" />
-                                    <ComboBoxItem Content="Block" />
-                                </ComboBox>
-                                <Button Grid.Column="2" x:Name="BtnAddRule" Content="+" Padding="18,4" FontSize="20" FontWeight="Bold" Style="{StaticResource PrimaryButton}" Height="44" Click="BtnAddRule_Click" />
+                                <TextBox Grid.Column="0" x:Name="InputNewRulePattern" FontSize="13.5" PlaceholderText="e.g. *.digikala.com or 1.1.1.1" Height="40" CornerRadius="10" Background="{StaticResource FillSunken}" BorderBrush="{StaticResource NmSunkenBorderBrush}" />
+                                <Button Grid.Column="1" x:Name="BtnAddRule" Content="+ Add" Padding="14,4" FontSize="13.5" FontWeight="Bold" Style="{StaticResource PrimaryButton}" Height="40" Click="BtnAddRule_Click" />
                             </Grid>
 
+                            <!-- System *.ir Chip -->
+                            <Border Background="#1A332400" BorderBrush="#55FFB900" BorderThickness="1" CornerRadius="8" Padding="10,6" HorizontalAlignment="Left">
+                                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                    <TextBlock Text="*.ir" FontSize="12" FontWeight="Bold" Foreground="#FFFFB900" VerticalAlignment="Center" />
+                                    <Border Background="#33FFB900" CornerRadius="4" Padding="4,1" VerticalAlignment="Center">
+                                        <TextBlock Text="🔒 SYS" FontSize="9" FontWeight="Bold" Foreground="#FFFFB900" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+
                             <!-- Rules List -->
-                            <ListView x:Name="ListCustomRules" SelectionMode="None" MaxHeight="300">
+                            <ListView x:Name="ListCustomRules" SelectionMode="None" MaxHeight="220">
                                 <ListView.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource FillTertiary}" CornerRadius="12" Padding="12,8" Margin="0,4">
+                                        <Border Background="{StaticResource FillSunken}" CornerRadius="10" Padding="10,6" Margin="0,3" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding Pattern}" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center" />
-                                                <Border Grid.Column="1" Background="{StaticResource FillSunken}" CornerRadius="6" Padding="10,3" Margin="10,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Action}" FontSize="13" Foreground="{StaticResource AccentBrush}" FontWeight="Bold" />
-                                                </Border>
-                                                <Button Grid.Column="2" Content="✕" Padding="10,2" Height="32" MinHeight="32" FontSize="14" Style="{StaticResource QuietButton}" Click="BtnDeleteRule_Click" Tag="{Binding}" />
+                                                <TextBlock Grid.Column="0" Text="{Binding Pattern}" FontSize="13.5" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                <Button Grid.Column="1" Content="✕" Padding="8,2" Height="28" MinHeight="28" FontSize="12" Style="{StaticResource QuietButton}" Click="BtnDeleteRule_Click" Tag="{Binding}" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -327,108 +421,98 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="0,0,0,14">
+                <Grid Grid.Row="0" Margin="0,0,0,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="System Diagnostics &amp; Logs" FontSize="22" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="0" x:Name="TextLogsHeader" Text="System Logs" FontSize="17" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="BtnCopyLogs" Content="Copy Logs" Padding="14,4" Height="36" MinHeight="36" FontSize="13.5" Style="{StaticResource SecondaryButton}" Click="BtnCopyLogs_Click" />
-                        <Button x:Name="BtnClearLogs" Content="Clear" Padding="14,4" Height="36" MinHeight="36" FontSize="13.5" Style="{StaticResource QuietButton}" Click="BtnClearLogs_Click" />
+                        <Button x:Name="BtnCopyLogs" Content="Copy" Padding="12,3" Height="32" MinHeight="32" FontSize="12.5" Style="{StaticResource SecondaryButton}" Click="BtnCopyLogs_Click" />
+                        <Button x:Name="BtnClearLogs" Content="Clear" Padding="12,3" Height="32" MinHeight="32" FontSize="12.5" Style="{StaticResource DangerButton}" Click="BtnClearLogs_Click" />
                     </StackPanel>
                 </Grid>
 
-                <TextBox Grid.Row="1" x:Name="TextLogsViewer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="{StaticResource FontMono}" FontSize="13" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" CornerRadius="16" Padding="14" />
+                <TextBox Grid.Row="1" x:Name="TextLogsViewer" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap" FontFamily="{StaticResource FontMono}" FontSize="12" Background="{StaticResource FillSunken}" BorderBrush="{StaticResource NmSunkenBorderBrush}" CornerRadius="14" Padding="12" />
             </Grid>
 
             <!-- TAB 4: SETTINGS & ABOUT -->
-            <ScrollViewer x:Name="ViewTabAbout" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
-                <StackPanel Spacing="16" HorizontalAlignment="Center" MaxWidth="520">
+            <ScrollViewer x:Name="ViewTabAbout" VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled" Visibility="Collapsed">
+                <StackPanel Spacing="14">
 
                     <!-- App & Tray Settings Card -->
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="20" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
-                        <StackPanel Spacing="14">
-                            <TextBlock x:Name="TextSettingsHeader" Text="App Behavior &amp; System Tray" FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                    <Border Background="{StaticResource NmCardBrush}" CornerRadius="16" Padding="18" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="1">
+                        <StackPanel Spacing="12">
+                            <TextBlock x:Name="TextSettingsHeader" Text="System &amp; Tray Settings" FontSize="16" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
 
                             <!-- Start with Windows Switch -->
-                            <Grid>
+                            <Grid FlowDirection="LeftToRight">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock x:Name="TextStartWithWindowsTitle" Text="Start with Windows (System Tray)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
-                                    <TextBlock x:Name="TextStartWithWindowsDesc" Text="Launch automatically on Windows startup minimized to system tray." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                    <TextBlock x:Name="TextStartWithWindowsTitle" Text="Start with Windows" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                    <TextBlock x:Name="TextStartWithWindowsDesc" Text="Launch automatically on system boot" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <ToggleSwitch Grid.Column="1" x:Name="SwitchStartWithWindows" IsOn="False" Toggled="SwitchStartWithWindows_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchStartWithWindows" IsOn="False" Toggled="SwitchStartWithWindows_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="0" />
                             </Grid>
 
                             <!-- Close to Tray Switch -->
-                            <Grid>
+                            <Grid FlowDirection="LeftToRight">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock x:Name="TextCloseToTrayTitle" Text="Minimize to Tray on Close (X)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
-                                    <TextBlock x:Name="TextCloseToTrayDesc" Text="Keep connection active in background when window is closed." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                    <TextBlock x:Name="TextCloseToTrayTitle" Text="Close to Tray (X button)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                    <TextBlock x:Name="TextCloseToTrayDesc" Text="Keep running in background when closed" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <ToggleSwitch Grid.Column="1" x:Name="SwitchCloseToTray" IsOn="False" Toggled="SwitchCloseToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchCloseToTray" IsOn="False" Toggled="SwitchCloseToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="0" />
                             </Grid>
 
                             <!-- Minimize to Tray Switch -->
-                            <Grid>
+                            <Grid FlowDirection="LeftToRight">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2">
-                                    <TextBlock x:Name="TextMinimizeToTrayTitle" Text="Minimize to Tray on Minimize (_)" FontSize="14.5" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
-                                    <TextBlock x:Name="TextMinimizeToTrayDesc" Text="Hide window to system tray when minimized." FontSize="12.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="2" Margin="0,0,12,0">
+                                    <TextBlock x:Name="TextMinimizeToTrayTitle" Text="Minimize to Tray (_ button)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource LabelPrimary}" />
+                                    <TextBlock x:Name="TextMinimizeToTrayDesc" Text="Send to taskbar tray instead of minimizing" FontSize="11.5" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
                                 </StackPanel>
-                                <ToggleSwitch Grid.Column="1" x:Name="SwitchMinimizeToTray" IsOn="False" Toggled="SwitchMinimizeToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" />
+                                <ToggleSwitch Grid.Column="1" x:Name="SwitchMinimizeToTray" IsOn="False" Toggled="SwitchMinimizeToTray_Toggled" OnContent="" OffContent="" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="0" />
                             </Grid>
+
+                            <!-- GitHub Repository Neumorphic Card -->
+                            <Border Background="{StaticResource FillSunken}" CornerRadius="12" Padding="12,10" Margin="0,6,0,0" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                                        <Border Width="32" Height="32" CornerRadius="8" Background="{StaticResource FillTertiary}" VerticalAlignment="Center">
+                                            <TextBlock Text="🐙" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel VerticalAlignment="Center" Spacing="1">
+                                            <TextBlock x:Name="TextGithubLabel" Text="GitHub Repository" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
+                                            <TextBlock Text="omid-io / AirTun" FontSize="10.5" Foreground="{StaticResource LabelSecondary}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <Button Grid.Column="1" x:Name="BtnOpenGithub" Content="Open ↗" Padding="10,4" Height="30" MinHeight="30" FontSize="11.5" FontWeight="Bold" Style="{StaticResource SecondaryButton}" Click="BtnOpenGithub_Click" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
                         </StackPanel>
                     </Border>
-
-                    <!-- Branding & About Card -->
-                    <Border Background="{StaticResource FillSecondary}" CornerRadius="18" Padding="20" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="1">
-                        <StackPanel Spacing="12">
-                            <StackPanel Orientation="Horizontal" Spacing="10">
-                                <Image Source="Assets/Square44x44Logo.png" Width="26" Height="26" VerticalAlignment="Center" />
-                                <TextBlock Text="AirTun v1.0.0" FontSize="18" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" VerticalAlignment="Center" />
-                            </StackPanel>
-                            <TextBlock x:Name="TextAboutDescription" Text="Modern, ultra-low latency internet sharing from Android to Windows with native SOCKS5 and WinTun virtual adapter." FontSize="14" Foreground="{StaticResource LabelSecondary}" TextWrapping="Wrap" />
-                            <MenuFlyoutSeparator />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="Developer" FontSize="14" Foreground="{StaticResource LabelSecondary}" />
-                                <TextBlock Grid.Column="1" Text="Omid Zaferi" FontSize="14" FontWeight="Bold" Foreground="{StaticResource LabelPrimary}" />
-                            </Grid>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="License" FontSize="14" Foreground="{StaticResource LabelSecondary}" />
-                                <TextBlock Grid.Column="1" Text="MIT Open Source" FontSize="14" Foreground="{StaticResource LabelPrimary}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-
-                    <Button x:Name="BtnOpenGithub" Content="⭐ Open Project on GitHub" FontSize="15" Height="46" Style="{StaticResource SecondaryButton}" Click="BtnOpenGithub_Click" />
                 </StackPanel>
             </ScrollViewer>
 
         </Grid>
 
-        <!-- BOTTOM NAVIGATION BAR (RTL order: Settings | Logs | Routing | Connect) -->
-        <Border Grid.Row="2" Background="{StaticResource FillSecondary}" BorderBrush="{StaticResource HairlineBrush}" BorderThickness="0,1,0,0">
-            <Grid Padding="0,6,0,2">
+        <!-- BOTTOM NAVIGATION BAR (Order: Settings | Logs | Routing | Connect) -->
+        <Border Grid.Row="2" Background="{StaticResource NmCardBrush}" BorderBrush="{StaticResource NmBorderBrush}" BorderThickness="0,1,0,0">
+            <Grid Padding="12,8,12,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="*" />
@@ -437,51 +521,66 @@
                 </Grid.ColumnDefinitions>
 
                 <!-- Col 0: Settings -->
-                <Button Grid.Column="0" x:Name="NavBtnAbout" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnAbout_Click">
-                    <Grid>
-                        <Border Height="2" Background="Transparent" VerticalAlignment="Top" Margin="0,-6,0,0" HorizontalAlignment="Stretch" />
-                        <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="⚙️" FontSize="17" HorizontalAlignment="Center" />
-                            <TextBlock x:Name="NavTextAbout" Text="Settings" FontSize="12.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                <Border Grid.Column="0" x:Name="NavPillAbout" CornerRadius="12" Background="Transparent" Margin="2,0">
+                    <Button x:Name="NavBtnAbout" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" Click="NavBtnAbout_Click">
+                        <StackPanel Spacing="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path x:Name="NavIconAbout"
+                                  Data="M15 12A3 3 0 1 0 9 12A3 3 0 1 0 15 12Z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                                  Width="19" Height="19" Stretch="Uniform"
+                                  Fill="Transparent" Stroke="{StaticResource LabelSecondary}" StrokeThickness="1.8"
+                                  StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="NavTextAbout" Text="Settings" FontSize="11" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                         </StackPanel>
-                    </Grid>
-                </Button>
+                    </Button>
+                </Border>
 
                 <!-- Col 1: Logs -->
-                <Button Grid.Column="1" x:Name="NavBtnLogs" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnLogs_Click">
-                    <Grid>
-                        <Border Height="2" Background="Transparent" VerticalAlignment="Top" Margin="0,-6,0,0" HorizontalAlignment="Stretch" />
-                        <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="📋" FontSize="17" HorizontalAlignment="Center" />
-                            <TextBlock x:Name="NavTextLogs" Text="Logs" FontSize="12.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                <Border Grid.Column="1" x:Name="NavPillLogs" CornerRadius="12" Background="Transparent" Margin="2,0">
+                    <Button x:Name="NavBtnLogs" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" Click="NavBtnLogs_Click">
+                        <StackPanel Spacing="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path x:Name="NavIconLogs"
+                                  Data="M4 17L10 11L4 5 M12 19L20 19"
+                                  Width="19" Height="19" Stretch="Uniform"
+                                  Fill="Transparent" Stroke="{StaticResource LabelSecondary}" StrokeThickness="2"
+                                  StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="NavTextLogs" Text="Logs" FontSize="11" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                         </StackPanel>
-                    </Grid>
-                </Button>
+                    </Button>
+                </Border>
 
                 <!-- Col 2: Routing -->
-                <Button Grid.Column="2" x:Name="NavBtnRouting" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnRouting_Click">
-                    <Grid>
-                        <Border Height="2" Background="Transparent" VerticalAlignment="Top" Margin="0,-6,0,0" HorizontalAlignment="Stretch" />
-                        <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="🛡️" FontSize="17" HorizontalAlignment="Center" />
-                            <TextBlock x:Name="NavTextRouting" Text="Routing" FontSize="12.5" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
+                <Border Grid.Column="2" x:Name="NavPillRouting" CornerRadius="12" Background="Transparent" Margin="2,0">
+                    <Button x:Name="NavBtnRouting" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" Click="NavBtnRouting_Click">
+                        <StackPanel Spacing="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path x:Name="NavIconRouting"
+                                  Data="M6 3L6 15 M21 6A3 3 0 1 0 15 6A3 3 0 1 0 21 6 M9 18A3 3 0 1 0 3 18A3 3 0 1 0 9 18 M18 9a9 9 0 0 1-9 9"
+                                  Width="19" Height="19" Stretch="Uniform"
+                                  Fill="Transparent" Stroke="{StaticResource LabelSecondary}" StrokeThickness="2"
+                                  StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="NavTextRouting" Text="Routing" FontSize="11" Foreground="{StaticResource LabelSecondary}" HorizontalAlignment="Center" />
                         </StackPanel>
-                    </Grid>
-                </Button>
+                    </Button>
+                </Border>
 
                 <!-- Col 3: Connect (Primary / Home) -->
-                <Button Grid.Column="3" x:Name="NavBtnConnect" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Click="NavBtnConnect_Click">
-                    <Grid>
-                        <Border Height="2" Background="{StaticResource AccentBrush}" VerticalAlignment="Top" Margin="0,-6,0,0" HorizontalAlignment="Stretch" />
-                        <StackPanel Spacing="2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <TextBlock Text="🚀" FontSize="17" HorizontalAlignment="Center" />
-                            <TextBlock x:Name="NavTextConnect" Text="Connect" FontSize="12.5" FontWeight="Bold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
+                <Border Grid.Column="3" x:Name="NavPillConnect" CornerRadius="12" Background="{StaticResource FillSunken}" BorderBrush="{StaticResource NmSunkenBorderBrush}" BorderThickness="1" Margin="2,0">
+                    <Button x:Name="NavBtnConnect" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Padding="0" Click="NavBtnConnect_Click">
+                        <StackPanel Spacing="3" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path x:Name="NavIconConnect"
+                                  Data="M13 2L3 14 12 14 11 22 21 10 12 10 13 2Z"
+                                  Width="19" Height="19" Stretch="Uniform"
+                                  Fill="Transparent" Stroke="{StaticResource AccentBrush}" StrokeThickness="2"
+                                  StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                  HorizontalAlignment="Center"/>
+                            <TextBlock x:Name="NavTextConnect" Text="Connect" FontSize="11" FontWeight="ExtraBold" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" />
                         </StackPanel>
-                    </Grid>
-                </Button>
+                    </Button>
+                </Border>
             </Grid>
         </Border>
-
 
     </Grid>
 </Window>

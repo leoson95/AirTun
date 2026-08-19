@@ -12,6 +12,8 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,8 +50,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -64,8 +69,17 @@ import io.airtun.app.core.ConnectionState
 import io.airtun.app.core.ErrorCode
 import io.airtun.app.core.WarningCode
 import io.airtun.app.service.LocalLog
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import io.airtun.app.ui.theme.LocalGlass
 import io.airtun.app.ui.theme.glassPanel
+import io.airtun.app.ui.theme.nmCard
+import io.airtun.app.ui.theme.nmSunken
 
 @Composable
 fun HomeScreen(
@@ -73,6 +87,7 @@ fun HomeScreen(
     batteryExempt: Boolean,
     warnings: Set<WarningCode>,
     themeMode: String,
+    lang: String = "en",
     logs: List<LocalLog.Entry>,
     onStart: () -> Unit,
     onStop: () -> Unit,
@@ -81,9 +96,42 @@ fun HomeScreen(
     onAllowBattery: () -> Unit,
     onDismissWarning: (WarningCode) -> Unit,
     onSetTheme: (String) -> Unit,
+    onToggleLang: () -> Unit = {},
     onClearLogs: () -> Unit,
     onShareLogs: () -> Unit = {},
 ) {
+    val isRunning = state is ConnectionState.Advertising || state is ConnectionState.Connected
+    val isPreparing = state is ConnectionState.Preparing
+    val isError = state is ConnectionState.Error
+
+    val host = when (state) {
+        is ConnectionState.Advertising -> state.host
+        is ConnectionState.Connected -> state.host
+        else -> "192.168.43.1"
+    }
+    val port = when (state) {
+        is ConnectionState.Advertising -> state.port
+        is ConnectionState.Connected -> state.port
+        else -> 10808
+    }
+    val pinCode = when (state) {
+        is ConnectionState.Advertising -> state.pinCode
+        is ConnectionState.Connected -> state.pinCode
+        else -> "----"
+    }
+    val clientCount = when (state) {
+        is ConnectionState.Connected -> state.clientCount
+        else -> 0
+    }
+    val bytesUp = when (state) {
+        is ConnectionState.Connected -> state.bytesUp
+        else -> 0L
+    }
+    val bytesDown = when (state) {
+        is ConnectionState.Connected -> state.bytesDown
+        else -> 0L
+    }
+
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
@@ -91,367 +139,455 @@ fun HomeScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(horizontal = 24.dp, vertical = 28.dp),
+                .padding(horizontal = 20.dp, vertical = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Header()
-            Spacer(Modifier.height(20.dp))
+            Header(lang = lang, onToggleLang = onToggleLang)
+            Spacer(Modifier.height(16.dp))
 
             WarningBanners(warnings, onDismissWarning)
 
-            Crossfade(
-                targetState = state.stateName,
-                animationSpec = tween(280),
-                label = "state_transition",
-            ) { _ ->
-                when (state) {
-                    is ConnectionState.Idle -> IdlePanel(onStart)
-                    is ConnectionState.Preparing -> PreparingPanel()
-                    is ConnectionState.Advertising -> ActivePanel(
-                        host = state.host,
-                        port = state.port,
-                        pinCode = state.pinCode,
-                        clientCount = 0,
-                        bytesUp = 0,
-                        bytesDown = 0,
-                        reconnecting = state.reconnecting,
-                        onStop = onStop,
-                    )
-                    is ConnectionState.Connected -> ActivePanel(
-                        host = state.host,
-                        port = state.port,
-                        pinCode = state.pinCode,
-                        clientCount = state.clientCount,
-                        bytesUp = state.bytesUp,
-                        bytesDown = state.bytesDown,
-                        reconnecting = state.reconnecting,
-                        onStop = onStop,
-                    )
-                    is ConnectionState.Error -> ErrorPanel(state.code, onRetry, onDismissError)
-                }
+            if (isError && state is ConnectionState.Error) {
+                ErrorPanel(state.code, onRetry, onDismissError)
+                Spacer(Modifier.height(16.dp))
             }
 
-            Spacer(Modifier.height(20.dp))
+            // Giant Neumorphic Power Button
+            GiantPowerButton(
+                isRunning = isRunning,
+                isPreparing = isPreparing,
+                onClick = {
+                    if (isRunning || isPreparing) onStop() else onStart()
+                },
+            )
+
+            Spacer(Modifier.height(18.dp))
+
+            // Connection PIN Card
+            ConnectionPinCard(
+                host = host,
+                port = port,
+                pinCode = pinCode,
+                isRunning = isRunning,
+            )
+
+            Spacer(Modifier.height(14.dp))
+
+            // 2-Column Metrics Grid
+            MetricsGrid(
+                clientCount = clientCount,
+                bytesUp = bytesUp,
+                bytesDown = bytesDown,
+                isRunning = isRunning,
+            )
+
+            Spacer(Modifier.height(16.dp))
+
+            // Windows Client Required Card
+            WindowsClientRequiredCard()
+
+            Spacer(Modifier.height(16.dp))
 
             if (!batteryExempt) {
                 BatteryBanner(onAllowBattery)
                 Spacer(Modifier.height(14.dp))
             }
 
-            AdvancedSection(themeMode, logs, onSetTheme, onClearLogs, onShareLogs)
+            Spacer(Modifier.height(16.dp))
+
         }
     }
 }
 
 @Composable
-private fun Header() {
+private fun Header(lang: String = "en", onToggleLang: () -> Unit = {}) {
     val glass = LocalGlass.current
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column {
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.displaySmall,
-                color = glass.accent,
-                fontWeight = FontWeight.ExtraBold,
-            )
-            Text(
-                text = stringResource(R.string.tagline),
-                style = MaterialTheme.typography.labelSmall,
-                color = glass.textSecondary,
-            )
-        }
-    }
-}
+        Image(
+            painter = painterResource(id = R.drawable.brand_wordmark),
+            contentDescription = "AirTun",
+            modifier = Modifier.height(24.dp),
+        )
 
-@Composable
-private fun IdlePanel(onStart: () -> Unit) {
-    val glass = LocalGlass.current
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .glassPanel(radius = 28.dp)
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
         Box(
             modifier = Modifier
-                .size(110.dp)
-                .clip(CircleShape)
-                .background(glass.accentSubtle)
-                .clickable(role = Role.Button, onClick = onStart),
+                .clip(RoundedCornerShape(10.dp))
+                .nmCard(10.dp)
+                .clickable(onClick = onToggleLang)
+                .padding(horizontal = 14.dp, vertical = 7.dp),
             contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(CircleShape)
-                    .background(glass.accent),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "▶",
-                    color = glass.onAccent,
-                    fontSize = 32.sp,
-                )
-            }
+            Text(
+                text = if (lang == "fa") "EN" else "FA",
+                color = glass.accent,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.ExtraBold,
+                letterSpacing = 1.sp,
+            )
         }
-
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = stringResource(R.string.action_start),
-            style = MaterialTheme.typography.titleLarge,
-            color = glass.textPrimary,
-            fontWeight = FontWeight.Bold,
-        )
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = stringResource(R.string.status_idle),
-            style = MaterialTheme.typography.bodyMedium,
-            color = glass.textSecondary,
-            textAlign = TextAlign.Center,
-        )
     }
 }
 
 @Composable
-private fun PreparingPanel() {
+private fun GiantPowerButton(
+    isRunning: Boolean,
+    isPreparing: Boolean,
+    onClick: () -> Unit,
+) {
     val glass = LocalGlass.current
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
-    val scale by infiniteTransition.animateFloat(
-        initialValue = 0.85f,
-        targetValue = 1.15f,
+    val infiniteTransition = rememberInfiniteTransition(label = "powerPulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.35f,
         animationSpec = InfiniteRepeatableSpec(
-            animation = tween(700),
-            repeatMode = RepeatMode.Reverse,
+            animation = tween(2000),
+            repeatMode = RepeatMode.Restart,
         ),
-        label = "scale",
+        label = "pulseScale",
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 0f,
+        animationSpec = InfiniteRepeatableSpec(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "pulseAlpha",
     )
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .glassPanel(radius = 28.dp)
-            .padding(40.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(vertical = 12.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(90.dp)
-                .scale(scale)
-                .clip(CircleShape)
-                .background(glass.accentSubtle),
-            contentAlignment = Alignment.Center,
-        ) {
+        // Animated glowing ring when running
+        if (isRunning) {
             Box(
                 modifier = Modifier
-                    .size(50.dp)
+                    .size(148.dp)
+                    .scale(pulseScale)
                     .clip(CircleShape)
-                    .background(glass.accent),
+                    .border(1.5.dp, glass.accent.copy(alpha = pulseAlpha), CircleShape),
             )
         }
 
-        Spacer(Modifier.height(24.dp))
-
-        Text(
-            text = stringResource(R.string.status_preparing),
-            style = MaterialTheme.typography.titleLarge,
-            color = glass.textPrimary,
-        )
+        // Outer Raised Neumorphic Circle
+        // HTML: box-shadow: 14px 14px 28px rgba(0,0,0,0.65), -8px -8px 20px rgba(255,255,255,0.045)
+        // Running HTML: box-shadow: 0 0 40px rgba(0,229,255,0.35) + above
+        Box(
+            modifier = Modifier
+                .size(148.dp)
+                .shadow(
+                    elevation = if (isRunning) 18.dp else 10.dp,
+                    shape = CircleShape,
+                    clip = false,
+                    spotColor = if (isRunning) glass.accent.copy(alpha = 0.35f) else Color(0x8C000000),
+                    ambientColor = if (isRunning) glass.accent.copy(alpha = 0.15f) else Color(0x33000000),
+                )
+                .clip(CircleShape)
+                // Raised gradient: lighter top-left → darker bottom-right
+                .background(
+                    Brush.linearGradient(
+                        colors = listOf(Color(0xFF181D28), Color(0xFF10141D)),
+                    )
+                )
+                // Idle: subtle white edge rgba(255,255,255,0.07); Running: cyan at 50%
+                .border(
+                    width = 1.5.dp,
+                    color = if (isRunning) glass.accent.copy(alpha = 0.5f) else Color(0x12FFFFFF),
+                    shape = CircleShape,
+                )
+                .clickable(role = Role.Button, onClick = onClick),
+            contentAlignment = Alignment.Center,
+        ) {
+            // Inner Sunken Circle
+            // HTML idle:  background: #090c12, box-shadow: inset 6px 6px 14px rgba(0,0,0,0.85)
+            // HTML running: background: radial-gradient(ellipse, rgba(0,229,255,0.12), #06080d 70%)
+            Box(
+                modifier = Modifier
+                    .size(106.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isRunning)
+                            Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0xFF00E5FF).copy(alpha = 0.12f),
+                                    Color(0xFF06080D),
+                                ),
+                            )
+                        else
+                            Brush.radialGradient(
+                                colors = listOf(Color(0xFF0D1018), Color(0xFF090C12)),
+                            )
+                    )
+                    // Asymmetric inset border: dark top-left / subtle light bottom-right
+                    .border(
+                        1.dp,
+                        Brush.linearGradient(
+                            colors = listOf(Color(0x99000000), Color(0x0DFFFFFF)),
+                            start = Offset.Zero,
+                            end = Offset.Infinite,
+                        ),
+                        CircleShape,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    // Power icon — matches HTML SVG exactly:
+                    // <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/> (arc, gap at 12 o'clock)
+                    // <line x1="12" y1="2" x2="12" y2="12"/>     (vertical stem)
+                    // Canvas: 34dp, mapped from 24×24 SVG viewBox
+                    val iconColor = if (isRunning) glass.accent else glass.textTertiary
+                    Canvas(modifier = Modifier.size(34.dp)) {
+                        val sw = 2.4.dp.toPx()
+                        val cx = size.width / 2f
+                        val cy = size.height / 2f
+                        // r = 9/24 = 37.5% — exact match to HTML arc radius
+                        val r = size.width * (9f / 24f)
+                        // Arc: gap at 12 o'clock (top center).
+                        // Compose convention: 0°=3h(right), 90°=6h(bottom), 270°=12h(top).
+                        // Right endpoint (18.36,6.64) in 24px → ≈320° in Compose
+                        // Left  endpoint (5.63, 6.64) in 24px → ≈220° in Compose
+                        // Gap 220°→320° through 270° = 100° centered at 12 o'clock ✓
+                        drawArc(
+                            color = iconColor,
+                            startAngle = 320f,   // upper-right (≈1:30 o'clock)
+                            sweepAngle = 260f,   // CW: 3h → 6h → 9h → upper-left (≈10:30)
+                            useCenter = false,
+                            topLeft = Offset(cx - r, cy - r), // centered, no vertical offset
+                            size = Size(r * 2f, r * 2f),
+                            style = Stroke(width = sw, cap = StrokeCap.Round),
+                        )
+                        // Stem: y=2 to y=12 in 24px viewBox → 8.3% to 50% of canvas height
+                        drawLine(
+                            color = iconColor,
+                            start = Offset(cx, size.height * (2f / 24f)),
+                            end = Offset(cx, cy),
+                            strokeWidth = sw,
+                            cap = StrokeCap.Round,
+                        )
+                    }
+                    Spacer(Modifier.height(6.dp))
+                    Text(
+                        text = if (isPreparing) stringResource(R.string.phone_power_preparing) else if (isRunning) stringResource(R.string.phone_power_stop) else stringResource(R.string.phone_power_start),
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (isRunning) glass.accent else glass.textTertiary,
+                        letterSpacing = 1.5.sp,
+                    )
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun ActivePanel(
+private fun ConnectionPinCard(
     host: String,
     port: Int,
     pinCode: String,
-    clientCount: Int,
-    bytesUp: Long,
-    bytesDown: Long,
-    reconnecting: Boolean,
-    onStop: () -> Unit,
+    isRunning: Boolean,
 ) {
     val glass = LocalGlass.current
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
-    var showQr by rememberSaveable { mutableStateOf(false) }
 
-    Column(
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .glassPanel(radius = 28.dp)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (clientCount > 0) glass.accentSubtle else glass.fillRaised)
-                .padding(horizontal = 14.dp, vertical = 6.dp),
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .clip(CircleShape)
-                    .background(if (clientCount > 0) glass.accent else glass.warning),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(
-                text = if (reconnecting) {
-                    stringResource(R.string.status_reconnecting)
-                } else if (clientCount > 0) {
-                    pluralStringResource(R.plurals.status_connected, clientCount, clientCount)
-                } else {
-                    stringResource(R.string.status_waiting)
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = if (clientCount > 0) glass.accent else glass.textPrimary,
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        Spacer(Modifier.height(20.dp))
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .glassPanel(radius = 20.dp, raised = true)
-                .clickable {
+            .nmCard(20.dp)
+            .clickable {
+                if (pinCode != "----") {
                     clipboardManager.setText(AnnotatedString(pinCode))
-                    Toast.makeText(context, "PIN $pinCode Copied", Toast.LENGTH_SHORT).show()
-                }
-                .padding(18.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = stringResource(R.string.pin_code_label),
-                style = MaterialTheme.typography.labelSmall,
-                color = glass.textSecondary,
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pinCode.forEach { char ->
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp, 56.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(glass.fill)
-                            .padding(4.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            text = char.toString(),
-                            style = MaterialTheme.typography.headlineMedium,
-                            color = glass.accent,
-                            fontWeight = FontWeight.ExtraBold,
-                        )
-                    }
+                    Toast.makeText(context, context.getString(R.string.phone_pin_copied, pinCode), Toast.LENGTH_SHORT).show()
                 }
             }
-            Spacer(Modifier.height(8.dp))
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column {
             Text(
-                text = stringResource(R.string.pin_code_hint),
-                style = MaterialTheme.typography.labelSmall,
-                color = glass.textTertiary,
-                textAlign = TextAlign.Center,
+                text = stringResource(R.string.phone_pin_card_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.ExtraBold,
+                color = glass.textPrimary,
             )
-        }
-
-        Spacer(Modifier.height(16.dp))
-
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .glassPanel(radius = 16.dp, raised = false)
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    text = stringResource(R.string.socks_endpoint_label),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = glass.textTertiary,
-                )
-                Text(
-                    text = "$host:$port",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = glass.textPrimary,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "Traffic (Up / Down)",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = glass.textTertiary,
-                )
-                Text(
-                    text = "↑ ${formatBytes(bytesUp)}   ↓ ${formatBytes(bytesDown)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = glass.accent,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        }
-
-        Spacer(Modifier.height(12.dp))
-
-        TextButton(onClick = { showQr = !showQr }) {
+            Spacer(Modifier.height(2.dp))
             Text(
-                text = if (showQr) "▲ Hide QR Code" else "▼ ${stringResource(R.string.or_scan_qr)}",
+                text = if (isRunning) "$host:$port" else "192.168.43.1:10808",
+                style = MaterialTheme.typography.bodySmall,
                 color = glass.textSecondary,
-                style = MaterialTheme.typography.labelSmall,
+                fontFamily = FontFamily.Monospace,
             )
         }
-
-        AnimatedVisibility(
-            visible = showQr,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
-        ) {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 12.dp)
-                    .size(200.dp)
-                    .glassPanel(radius = 16.dp, raised = true)
-                    .padding(16.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                val qrContent = "airtun://$host:$port?pin=$pinCode"
-                QrImage(content = qrContent)
-            }
-        }
-
-        Spacer(Modifier.height(16.dp))
 
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(glass.errorSubtle)
-                .clickable(role = Role.Button, onClick = onStop),
+                .clip(RoundedCornerShape(12.dp))
+                .nmSunken(12.dp)
+                .padding(horizontal = 14.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                text = stringResource(R.string.action_stop),
-                color = glass.error,
-                style = MaterialTheme.typography.bodyMedium,
+                text = pinCode,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                color = if (pinCode != "----") glass.accent else glass.textTertiary,
+                letterSpacing = 4.sp,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetricsGrid(
+    clientCount: Int,
+    bytesUp: Long,
+    bytesDown: Long,
+    isRunning: Boolean,
+) {
+    val glass = LocalGlass.current
+    val totalBytes = bytesUp + bytesDown
+    val speedText = if (isRunning && totalBytes > 0) "${formatBytes(totalBytes)}/s" else "0.0 KB/s"
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        // Connected Devices
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .nmCard(16.dp)
+                .padding(14.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.phone_metric_devices),
+                style = MaterialTheme.typography.labelSmall,
+                color = glass.textSecondary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = pluralStringResource(R.plurals.status_connected, clientCount, clientCount),
+                fontFamily = FontFamily.Monospace,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = glass.textPrimary,
+            )
+        }
+
+        // Live Speed
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .nmCard(16.dp)
+                .padding(14.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.phone_metric_speed),
+                style = MaterialTheme.typography.labelSmall,
+                color = glass.textSecondary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = speedText,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = glass.accent,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WindowsClientRequiredCard() {
+    val glass = LocalGlass.current
+    val uriHandler = LocalUriHandler.current
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .nmCard(20.dp)
+            .padding(16.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            // SVG Info Circle — Canvas drawn, matches HTML stroke icon
+            Canvas(modifier = Modifier.size(18.dp)) {
+                val sw = 2.dp.toPx()
+                val r = size.width / 2f - sw / 2f
+                drawCircle(
+                    color = glass.accent,
+                    radius = r,
+                    style = Stroke(width = sw),
+                )
+                // Question mark dot at bottom (12,17)
+                drawCircle(
+                    color = glass.accent,
+                    radius = sw * 0.6f,
+                    center = Offset(size.width / 2f, size.height * 0.72f),
+                )
+                // Question mark top arc approximated as small arc
+                drawArc(
+                    color = glass.accent,
+                    startAngle = 210f,
+                    sweepAngle = 200f,
+                    useCenter = false,
+                    topLeft = Offset(size.width * 0.3f, size.height * 0.2f),
+                    size = Size(size.width * 0.4f, size.height * 0.32f),
+                    style = Stroke(width = sw, cap = StrokeCap.Round),
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.phone_help_card_title),
+                style = MaterialTheme.typography.titleSmall,
+                color = glass.textPrimary,
+                fontWeight = FontWeight.ExtraBold,
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Text(
+            text = stringResource(R.string.phone_help_card_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = glass.textSecondary,
+        )
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .nmSunken(10.dp)
+                .clickable { uriHandler.openUri("https://github.com/omid-io/AirTun") }
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.phone_download_label),
+                color = glass.textSecondary,
+                style = MaterialTheme.typography.labelSmall,
+            )
+            Text(
+                text = "github.com/omid-io/AirTun ↗",
+                color = glass.accent,
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold,
             )
         }
     }
 }
+
 
 @Composable
 private fun ErrorPanel(

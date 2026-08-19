@@ -22,6 +22,16 @@
     <string name="socks_endpoint_label">مشخصات سرور SOCKS5</string>
     <string name="or_scan_qr">یا کد QR را اسکن کنید</string>
     <string name="qr_content_description">کد QR اتصال AirTun</string>
+    <string name="phone_power_start">شروع</string>
+    <string name="phone_power_stop">توقف</string>
+    <string name="phone_power_preparing">···</string>
+    <string name="phone_pin_card_title">پین‌کد اتصال</string>
+    <string name="phone_pin_copied">پین %s کپی شد</string>
+    <string name="phone_metric_devices">دستگاه‌های متصل</string>
+    <string name="phone_metric_speed">سرعت زنده</string>
+    <string name="phone_help_card_title">نیازمند کلاینت ویندوز</string>
+    <string name="phone_help_card_desc">برای استفاده از AirTun، نسخه ویندوز را روی لپ‌تاپ یا سیستم خود اجرا کنید.</string>
+    <string name="phone_download_label">دانلود برای ویندوز</string>
 
     <!-- Warnings -->
     <string name="warning_no_vpn_title">هیچ VPN فعالی روی گوشی نیست</string>

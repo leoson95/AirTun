@@ -18,43 +18,61 @@ public static class Strings
     // Bottom Navigation Tabs
     public static string TabConnect => _isPersian ? "اتصال" : "Connect";
     public static string TabRouting => _isPersian ? "مسیریابی" : "Routing";
-    public static string TabLogs => _isPersian ? "لاگ‌ها" : "Logs";
+    public static string TabLogs => _isPersian ? "گزارش‌ها" : "Logs";
     public static string TabAbout => _isPersian ? "تنظیمات" : "Settings";
 
     // Statuses
     public static string StatusIdle => _isPersian ? "آماده برای اتصال" : "Ready to Connect";
     public static string StatusPreparing => _isPersian ? "در حال ایجاد تونل..." : "Starting Tunnel...";
-    public static string StatusConnected => _isPersian ? "اتصال برقرار است" : "Connected & Protected";
+    public static string StatusConnected => _isPersian ? "متصل به تانل (Connected)" : "Connected (TUN Active)";
     public static string StatusDisconnected => _isPersian ? "قطع شد" : "Disconnected";
     public static string StatusError => _isPersian ? "خطا در اتصال" : "Connection Error";
 
+    // Mode Pill
+    public static string StatusModeTun => "TUN";
+    public static string StatusModeProxy => "Proxy";
+
     // Modes
-    public static string ModeTunTitle => _isPersian ? "تونل کامل سیستم (TUN)" : "Full System TUN";
-    public static string ModeTunSubtitle => _isPersian ? "گیمینگ، تلگرام و همه برنامه‌ها" : "Games, Telegram & All Apps";
-    public static string ModeProxyTitle => _isPersian ? "پروکسی وب (Proxy)" : "Web Proxy Mode";
-    public static string ModeProxySubtitle => _isPersian ? "مرورگرها و ترافیک وب" : "Browsers & HTTP Apps";
+    public static string ModeTunTitle => "⚡ TUN Mode";
+    public static string ModeTunSubtitle => _isPersian ? "کل سیستم، گیم و برنامه‌ها" : "System-wide, games & apps";
+    public static string ModeProxyTitle => "🌐 Web Proxy";
+    public static string ModeProxySubtitle => _isPersian ? "مرورگرها و وب" : "Browsers & web only";
+
+    // Quick Tips
+    public static string QuickTipsLabel => _isPersian ? "نکات سریع" : "Quick Tips";
+    public static string Tip1 => _isPersian ? "از TUN Mode برای بازی‌ها و تمام سیستم استفاده کنید." : "Use TUN Mode for games and all-system routing.";
+    public static string Tip2 => _isPersian ? "از Web Proxy برای ترافیک مرورگر استفاده کنید." : "Use Web Proxy for browser-only traffic.";
+    public static string Tip3 => _isPersian ? "مطمئن شوید Hotspot گوشی فعال است." : "Make sure Hotspot is active on your phone.";
 
     // Routing & Bypass Domestic
-    public static string RoutingTitle => _isPersian ? "مسیریابی هوشمند و قوانین" : "Smart Routing Rules";
-    public static string BypassDomesticTitle => _isPersian ? "دایرکت سایت‌های ایرانی (.ir)" : "Bypass Iranian Sites (.ir)";
+    public static string RoutingTitle => _isPersian ? "مسیریابی هوشمند و بای‌پاس" : "Smart Routing Rules";
+    public static string RoutingSubtitle => _isPersian ? "اتصال مستقیم سایت‌ها بدون عبور از تانل" : "Direct connection without routing through proxy";
+    public static string BypassDomesticTitle => _isPersian ? "بای‌پاس سایت‌های داخلی (.ir)" : "Bypass Domestic Sites (.ir)";
     public static string BypassDomesticDesc => _isPersian
-        ? "سایت‌ها، بانک‌ها و سامانه‌های داخلی بدون عبور از تونل مستقیماً باز می‌شوند."
-        : "Domestic (.ir) domains & banks connect directly without tunneling for speed and savings.";
+        ? "سایت‌های بانکی، اداری و دامنه‌های ملی"
+        : "Iranian banking & national websites";
 
-    public static string CustomRulesHeader => _isPersian ? "قوانین سفارشی روتینگ" : "Custom Routing Rules";
-    public static string AddRuleAction => _isPersian ? "+ افزودن قانون" : "+ Add Rule";
-    public static string RulePatternPlaceholder => _isPersian ? "دامنه (مثال: digikala.com یا *.ir)" : "Domain (e.g. digikala.com or *.ir)";
+    public static string BypassLanTitle => _isPersian ? "بای‌پاس شبکه محلی (LAN)" : "Bypass Local Network (LAN)";
+    public static string BypassLanDesc => _isPersian
+        ? "192.168.x, 10.x, 127.0.0.1 و مودم"
+        : "192.168.x, 10.x, 127.0.0.1";
+
+    public static string CustomRulesHeader => _isPersian ? "دامنه‌ها و IPهای سفارشی" : "Custom Bypass Rules";
+    public static string CustomRulesDesc => _isPersian ? "افزودن دستی دامنه‌ها برای اتصال مستقیم:" : "Add domains/IPs to bypass the tunnel:";
+    public static string AddRuleAction => _isPersian ? "+ افزودن" : "+ Add";
+    public static string RulePatternPlaceholder => _isPersian ? "مثال: *.digikala.com یا 1.1.1.1" : "e.g. *.digikala.com or 1.1.1.1";
     public static string RuleActionDirect => _isPersian ? "مستقیم" : "Direct";
     public static string RuleActionProxy => _isPersian ? "از تونل" : "Proxy";
     public static string RuleActionBlock => _isPersian ? "مسدود" : "Block";
-    public static string DeleteRuleAction => _isPersian ? "حذف" : "Delete";
+    public static string DeleteRuleAction => "✕";
 
     // Discovery & Connect
     public static string DiscoveredHeader => _isPersian ? "گوشی در دسترس" : "Available Device";
     public static string SearchingDevices => _isPersian ? "در حال جستجو برای گوشی..." : "Searching for Phone...";
-    public static string PinHint => _isPersian ? "پین ۴ رقمی روی صفحه گوشی را وارد کنید" : "Enter the 4-digit PIN on phone screen";
+    public static string PinHint => _isPersian ? "پین ۴ رقمی امنیتی" : "4-digit Security PIN";
+    public static string PinAutoDetected => _isPersian ? "شناسایی خودکار ✓" : "Auto-detected ✓";
     public static string ConnectAction => _isPersian ? "اتصال به گوشی" : "Connect to Phone";
-    public static string DisconnectAction => _isPersian ? "قطع ارتباط" : "Disconnect";
+    public static string DisconnectAction => _isPersian ? "قطع اتصال" : "Disconnect";
     public static string RetryAction => _isPersian ? "تلاش مجدد" : "Retry";
     public static string DismissAction => _isPersian ? "بستن" : "Dismiss";
 
@@ -62,25 +80,31 @@ public static class Strings
     public static string TrafficHeader => _isPersian ? "ترافیک و سرعت لحظه‌ای" : "Live Network Bandwidth";
     public static string LiveTrafficHeader => _isPersian ? "نمودار زنده پهنای باند" : "Live Traffic Waveform";
     public static string TrafficTotal => _isPersian ? "حجم کل" : "Total Data";
-    public static string LatencyLabel => _isPersian ? "پینگ" : "Latency";
-    public static string DurationLabel => _isPersian ? "زمان" : "Duration";
+    public static string LatencyLabel => _isPersian ? "پینگ:" : "Ping:";
+    public static string DurationLabel => _isPersian ? "مدت:" : "Duration:";
     public static string OutboundIpHeader => _isPersian ? "لوکیشن و آی‌پی خروجی" : "Outbound Location";
     public static string FetchingGeo => _isPersian ? "در حال استعلام لوکیشن..." : "Resolving outbound location...";
     public static string RefreshGeoAction => _isPersian ? "بروزرسانی" : "Refresh";
 
     // Logs
-    public static string LogsHeader => _isPersian ? "لاگ‌های سیستم" : "System Diagnostics & Logs";
-    public static string CopyLogsAction => _isPersian ? "کپی لاگ‌ها" : "Copy Logs";
+    public static string LogsHeader => _isPersian ? "گزارش‌های سیستم" : "System Logs";
+    public static string CopyLogsAction => _isPersian ? "کپی" : "Copy";
+    public static string CopyLogsFeedback => _isPersian ? "✓ کپی شد" : "✓ Copied";
     public static string ClearLogsAction => _isPersian ? "پاک‌سازی" : "Clear";
 
     // Tray & Startup Settings
-    public static string SettingsHeader => _isPersian ? "تنظیمات برنامه" : "App Behavior & Tray";
-    public static string StartWithWindowsTitle => _isPersian ? "اجرا همراه با ویندوز در System Tray" : "Start with Windows (System Tray)";
-    public static string StartWithWindowsDesc => _isPersian ? "اجرای خودکار برنامه هنگام روشن شدن سیستم به صورت سایلنت در تسک‌بار." : "Launch automatically on Windows startup minimized to system tray.";
-    public static string CloseToTrayTitle => _isPersian ? "انتقال به System Tray با زدن ✕" : "Minimize to Tray on Close (X)";
-    public static string CloseToTrayDesc => _isPersian ? "پنجره بسته می‌شود اما اتصال در پس‌زمینه فعال می‌ماند." : "Keep connection active in background when window is closed.";
-    public static string MinimizeToTrayTitle => _isPersian ? "مخفی‌سازی به Tray با زدن کمینه (_)" : "Minimize to Tray on Minimize (_)";
-    public static string MinimizeToTrayDesc => _isPersian ? "پنجره هنگام مینیمایز شدن در تسک‌بار مخفی می‌شود." : "Hide window to system tray when minimized.";
+    public static string SettingsHeader => _isPersian ? "تنظیمات سیستم و Tray" : "System & Tray Settings";
+    public static string StartWithWindowsTitle => _isPersian ? "اجرا هنگام روشن شدن ویندوز" : "Start with Windows";
+    public static string StartWithWindowsDesc => _isPersian ? "اجرای خودکار برنامه با بوت سیستم" : "Launch automatically on system boot";
+    public static string CloseToTrayTitle => _isPersian ? "مینیمایز به Tray هنگام بستن (X)" : "Close to Tray (X button)";
+    public static string CloseToTrayDesc => _isPersian ? "برنامه با دکمه ضربدر بسته نشود و در پس‌زمینه بماند" : "Keep running in background when closed";
+    public static string MinimizeToTrayTitle => _isPersian ? "مینیمایز به Tray هنگام کوچک کردن (_)" : "Minimize to Tray (_ button)";
+    public static string MinimizeToTrayDesc => _isPersian ? "انتقال پنجره به منوی تسک‌بار" : "Send to taskbar tray instead of minimizing";
+
+    // GitHub Card
+    public static string GithubCardTitle => _isPersian ? "مخزن گیت‌هاب پروژه" : "GitHub Repository";
+    public static string GithubCardSub => "omid-io / AirTun";
+    public static string GithubCardAction => "Open ↗";
 
     // About
     public static string AboutTitle => _isPersian ? "درباره ایر‌تون" : "About AirTun";

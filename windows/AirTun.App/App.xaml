@@ -29,13 +29,42 @@
             <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
             <SolidColorBrush x:Key="DangerSoftBrush" Color="{StaticResource DangerSoftColor}" />
 
-            <SolidColorBrush x:Key="WindowSolidBrush" Color="#0D1117" />
-            <SolidColorBrush x:Key="FillSecondary" Color="#161B22" />
-            <SolidColorBrush x:Key="FillTertiary" Color="#21262D" />
-            <SolidColorBrush x:Key="FillSunken" Color="#080B0F" />
-            <SolidColorBrush x:Key="HairlineBrush" Color="#30363D" />
-            <SolidColorBrush x:Key="LabelPrimary" Color="#F0F6FC" />
-            <SolidColorBrush x:Key="LabelSecondary" Color="#8B949E" />
+            <!-- Neumorphic Palette Brushes matching HTML -->
+            <SolidColorBrush x:Key="WindowSolidBrush" Color="#0D1017" />
+            <SolidColorBrush x:Key="FillSecondary" Color="#10141D" />
+            <SolidColorBrush x:Key="FillTertiary" Color="#1C2232" />
+            <SolidColorBrush x:Key="FillSunken" Color="#090C12" />
+            <SolidColorBrush x:Key="HairlineBrush" Color="#262F3F" />
+            <SolidColorBrush x:Key="LabelPrimary" Color="#F1F5F9" />
+            <SolidColorBrush x:Key="LabelSecondary" Color="#94A3B8" />
+
+            <LinearGradientBrush x:Key="NmCardBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#1C2232" Offset="0.0" />
+                <GradientStop Color="#10131D" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="NmBorderBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#1CFFFFFF" Offset="0.0" />
+                <GradientStop Color="#A6000000" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="NmSunkenBorderBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#99000000" Offset="0.0" />
+                <GradientStop Color="#0DFFFFFF" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <SolidColorBrush x:Key="NmCardSelectedBrush" Color="#090C12" />
+            <SolidColorBrush x:Key="NmSunkenBrush" Color="#090C12" />
+
+            <LinearGradientBrush x:Key="NmPrimaryBtnBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#00E5FF" Offset="0.0" />
+                <GradientStop Color="#0284C7" Offset="1.0" />
+            </LinearGradientBrush>
+
+            <LinearGradientBrush x:Key="NmDangerBtnBrush" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#FF3366" Offset="0.0" />
+                <GradientStop Color="#BE123C" Offset="1.0" />
+            </LinearGradientBrush>
 
             <!-- Typography -->
             <FontFamily x:Key="FontSystem">ms-appx:///Assets/Fonts/Vazirmatn-Regular.ttf#Vazirmatn, Vazirmatn, Segoe UI Variable, Segoe UI, Tahoma</FontFamily>
@@ -90,22 +119,32 @@
             </Style>
 
             <Style x:Key="PrimaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
-                <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+                <Setter Property="Background" Value="{StaticResource NmPrimaryBtnBrush}" />
                 <Setter Property="Foreground" Value="#000000" />
                 <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="14" />
                 <Setter Property="BorderThickness" Value="0" />
             </Style>
 
             <Style x:Key="SecondaryButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
-                <Setter Property="Background" Value="{StaticResource FillTertiary}" />
+                <Setter Property="Background" Value="{StaticResource NmCardBrush}" />
                 <Setter Property="Foreground" Value="{StaticResource LabelPrimary}" />
-                <Setter Property="BorderBrush" Value="{StaticResource HairlineBrush}" />
+                <Setter Property="BorderBrush" Value="{StaticResource NmBorderBrush}" />
                 <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="12" />
             </Style>
 
             <Style x:Key="QuietButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
                 <Setter Property="Background" Value="Transparent" />
                 <Setter Property="Foreground" Value="{StaticResource LabelSecondary}" />
+                <Setter Property="BorderThickness" Value="0" />
+            </Style>
+
+            <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource ButtonBase}">
+                <Setter Property="Background" Value="{StaticResource NmDangerBtnBrush}" />
+                <Setter Property="Foreground" Value="#FFFFFF" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="CornerRadius" Value="14" />
                 <Setter Property="BorderThickness" Value="0" />
             </Style>
         </ResourceDictionary>

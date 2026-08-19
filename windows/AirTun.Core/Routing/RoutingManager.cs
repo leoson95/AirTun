@@ -6,6 +6,7 @@ namespace AirTun.Core.Routing;
 public sealed class RoutingManager
 {
     public bool BypassDomestic { get; set; } = true;
+    public bool BypassLan { get; set; } = true;
 
     private readonly List<RoutingRule> _builtInIranRules =
     [
@@ -87,17 +88,19 @@ public sealed class RoutingManager
 
     public string BuildWinInetBypassList()
     {
-        var entries = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        var entries = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (BypassLan)
         {
-            "<local>",
-            "127.*",
-            "10.*",
-            "172.16.*", "172.17.*", "172.18.*", "172.19.*",
-            "172.20.*", "172.21.*", "172.22.*", "172.23.*",
-            "172.24.*", "172.25.*", "172.26.*", "172.27.*",
-            "172.28.*", "172.29.*", "172.30.*", "172.31.*",
-            "192.168.*"
-        };
+            entries.Add("<local>");
+            entries.Add("127.*");
+            entries.Add("10.*");
+            entries.Add("172.16.*"); entries.Add("172.17.*"); entries.Add("172.18.*"); entries.Add("172.19.*");
+            entries.Add("172.20.*"); entries.Add("172.21.*"); entries.Add("172.22.*"); entries.Add("172.23.*");
+            entries.Add("172.24.*"); entries.Add("172.25.*"); entries.Add("172.26.*"); entries.Add("172.27.*");
+            entries.Add("172.28.*"); entries.Add("172.29.*"); entries.Add("172.30.*"); entries.Add("172.31.*");
+            entries.Add("192.168.*");
+        }
 
         if (BypassDomestic)
         {

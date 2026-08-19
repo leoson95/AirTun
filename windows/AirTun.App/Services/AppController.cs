@@ -44,6 +44,7 @@ public sealed class AppController : IDisposable
     {
         Settings = AppSettings.Load();
         Routing.BypassDomestic = Settings.BypassDomestic;
+        Routing.BypassLan = Settings.BypassLan;
         foreach (var rule in Settings.CustomRules)
         {
             Routing.CustomRules.Add(rule);
@@ -53,6 +54,7 @@ public sealed class AppController : IDisposable
     public void SaveCurrentSettings()
     {
         Settings.BypassDomestic = Routing.BypassDomestic;
+        Settings.BypassLan = Routing.BypassLan;
         Settings.CustomRules = [.. Routing.CustomRules];
         Settings.Save();
     }

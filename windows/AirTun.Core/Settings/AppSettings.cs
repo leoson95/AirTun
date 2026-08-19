@@ -6,6 +6,7 @@ namespace AirTun.Core.Settings;
 public sealed class AppSettings
 {
     public bool BypassDomestic { get; set; } = false;
+    public bool BypassLan { get; set; } = true;
     public bool CloseToTray { get; set; } = false;
     public bool MinimizeToTray { get; set; } = false;
     public bool StartWithWindows { get; set; } = false;
