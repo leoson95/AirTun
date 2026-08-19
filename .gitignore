@@ -40,3 +40,5 @@ windows/publish/
 *.binlog
 *.py
 
+
+preview/
