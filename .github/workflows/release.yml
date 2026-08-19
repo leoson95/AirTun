@@ -60,12 +60,12 @@ jobs:
       - name: Prepare Android Artifacts
         run: |
           TAG_VER="${GITHUB_REF_NAME:-${{ inputs.tag_name }}}"
-          mkdir -p artifacts
+          mkdir -p "${GITHUB_WORKSPACE}/artifacts"
           cd android/app/build/outputs/apk/release
           for apk in app-*-release.apk; do
             if [ -f "$apk" ]; then
               ARCH=$(echo "$apk" | sed -e 's/app-//' -e 's/-release.apk//')
-              cp "$apk" "../../../../../artifacts/AirTun-${TAG_VER}-${ARCH}.apk"
+              cp "$apk" "${GITHUB_WORKSPACE}/artifacts/AirTun-${TAG_VER}-${ARCH}.apk"
             fi
           done
 
