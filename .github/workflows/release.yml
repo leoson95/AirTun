@@ -1,0 +1,145 @@
+name: Release AirTun
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release Tag (e.g. v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: Build Android APKs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate Temporary Release Keystore
+        run: |
+          keytool -genkeypair -v \
+            -keystore android/release.keystore \
+            -alias airtun \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass airtunkspass \
+            -keypass airtunkspass \
+            -dname "CN=AirTun, OU=AirTun, O=AirTun, L=Tehran, S=Tehran, C=IR"
+
+      - name: Build Android Release APKs
+        working-directory: android
+        env:
+          AIRTUN_KEYSTORE_FILE: release.keystore
+          AIRTUN_KEYSTORE_PASSWORD: airtunkspass
+          AIRTUN_KEY_ALIAS: airtun
+          AIRTUN_KEY_PASSWORD: airtunkspass
+        run: |
+          chmod +x gradlew
+          TAG_VER="${GITHUB_REF_NAME:-${{ inputs.tag_name }}}"
+          VER_CLEAN=$(echo "$TAG_VER" | sed 's/^v//')
+          ./gradlew assembleRelease -PairtunVersion="$VER_CLEAN"
+
+      - name: Prepare Android Artifacts
+        run: |
+          TAG_VER="${GITHUB_REF_NAME:-${{ inputs.tag_name }}}"
+          mkdir -p artifacts
+          cd android/app/build/outputs/apk/release
+          for apk in app-*-release.apk; do
+            if [ -f "$apk" ]; then
+              ARCH=$(echo "$apk" | sed -e 's/app-//' -e 's/-release.apk//')
+              cp "$apk" "../../../../../artifacts/AirTun-${TAG_VER}-${ARCH}.apk"
+            fi
+          done
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: artifacts/*.apk
+
+  build-windows:
+    name: Build Windows Client
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Setup Go 1.23
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.x'
+
+      - name: Build Go Tunnel Engine (x64)
+        working-directory: windows/airtun-tun
+        shell: pwsh
+        run: |
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          go build -ldflags="-s -w" -o ../AirTun.App/airtun-tun.exe .
+
+      - name: Publish Windows App (x64)
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "${{ inputs.tag_name }}" }
+          dotnet publish windows/AirTun.App/AirTun.App.csproj -c Release -p:Platform=x64 -o win-x64
+          New-Item -ItemType Directory -Path artifacts -Force
+          Compress-Archive -Path win-x64/* -DestinationPath "artifacts/AirTun-$tag-windows-x64.zip"
+
+      - name: Upload Windows Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-zips
+          path: artifacts/*.zip
+
+  publish-release:
+    name: Publish GitHub Release
+    needs: [build-android, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release_files
+          merge-multiple: true
+
+      - name: Generate Checksums
+        working-directory: release_files
+        run: |
+          sha256sum * > SHA256SUMS.txt
+          ls -la
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || inputs.tag_name }}
+          name: "AirTun ${{ github.ref_name || inputs.tag_name }}"
+          files: |
+            release_files/*
+          generate_release_notes: true
+          draft: false
+          prerelease: false
