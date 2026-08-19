@@ -205,18 +205,19 @@ public sealed partial class MainWindow : Window
     private static extern bool ReleaseCapture();
 
     [DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, IntPtr wParam, IntPtr lParam);
+    private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
-    private const int WM_NCLBUTTONDOWN = 0xA1;
+    private const uint WM_NCLBUTTONDOWN = 0x00A1;
     private const int HT_CAPTION = 0x2;
 
     private void AppTitleBar_PointerPressed(object sender, PointerRoutedEventArgs e)
     {
         if (e.GetCurrentPoint(AppTitleBar).Properties.IsLeftButtonPressed)
         {
+            e.Handled = true;
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
             ReleaseCapture();
-            SendMessage(hWnd, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, IntPtr.Zero);
+            PostMessage(hWnd, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, IntPtr.Zero);
         }
     }
 
