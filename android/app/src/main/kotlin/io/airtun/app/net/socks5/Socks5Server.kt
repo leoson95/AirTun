@@ -41,6 +41,7 @@ class Socks5Server(
 
     val activeConnections = AtomicInteger(0)
     private val activeClients = ConcurrentHashMap<String, AtomicInteger>()
+    val uniqueClientCount: Int get() = activeClients.size
     val totalBytesUp = AtomicLong(0)
     val totalBytesDown = AtomicLong(0)
 

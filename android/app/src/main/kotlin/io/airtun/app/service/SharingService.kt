@@ -131,7 +131,7 @@ class SharingService : Service() {
                     ConnectionRepository.updateTraffic(
                         socksServer?.totalBytesUp?.get() ?: 0L,
                         socksServer?.totalBytesDown?.get() ?: 0L,
-                        socksServer?.activeConnections?.get() ?: 0,
+                        socksServer?.uniqueClientCount ?: 0,
                     )
                 },
                 onClientCountChanged = { count ->
