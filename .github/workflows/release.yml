@@ -76,7 +76,7 @@ jobs:
           path: artifacts/*.apk
 
   build-windows:
-    name: Build Windows Client
+    name: Build Windows Installers
     runs-on: windows-latest
     steps:
       - name: Checkout Code
@@ -92,27 +92,56 @@ jobs:
         with:
           go-version: '1.23.x'
 
-      - name: Build Go Tunnel Engine (x64)
-        working-directory: windows/airtun-tun
+      - name: Install Inno Setup
         shell: pwsh
         run: |
-          $env:GOOS = "windows"
-          $env:GOARCH = "amd64"
-          go build -ldflags="-s -w" -o ../AirTun.App/airtun-tun.exe .
+          choco install innosetup --no-progress
+          echo "C:\Program Files (x86)\Inno Setup 6" >> $env:GITHUB_PATH
 
-      - name: Publish Windows App (x64)
+      - name: Build and Package Windows x64 Installer
         shell: pwsh
         run: |
           $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "${{ inputs.tag_name }}" }
+          $cleanVer = $tag.TrimStart('v')
+
+          # 1. Build Go Engine for x64
+          $env:GOOS = "windows"
+          $env:GOARCH = "amd64"
+          cd windows/airtun-tun
+          go build -ldflags="-s -w" -o ../AirTun.App/airtun-tun.exe .
+          cd ../..
+
+          # 2. Publish .NET 8 WinUI 3 App for x64
           dotnet publish windows/AirTun.App/AirTun.App.csproj -c Release -p:Platform=x64 -o win-x64
+
+          # 3. Compile Inno Setup Installer
           New-Item -ItemType Directory -Path artifacts -Force
-          Compress-Archive -Path win-x64/* -DestinationPath "artifacts/AirTun-$tag-windows-x64.zip"
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$cleanVer" "/DAppArch=x64" "/DSourceDir=..\..\win-x64" windows/installer/AirTun.iss
+
+      - name: Build and Package Windows x86 Installer
+        shell: pwsh
+        run: |
+          $tag = if ($env:GITHUB_REF_NAME) { $env:GITHUB_REF_NAME } else { "${{ inputs.tag_name }}" }
+          $cleanVer = $tag.TrimStart('v')
+
+          # 1. Build Go Engine for x86
+          $env:GOOS = "windows"
+          $env:GOARCH = "386"
+          cd windows/airtun-tun
+          go build -ldflags="-s -w" -o ../AirTun.App/airtun-tun.exe .
+          cd ../..
+
+          # 2. Publish .NET 8 WinUI 3 App for x86
+          dotnet publish windows/AirTun.App/AirTun.App.csproj -c Release -p:Platform=x86 -o win-x86
+
+          # 3. Compile Inno Setup Installer
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$cleanVer" "/DAppArch=x86" "/DSourceDir=..\..\win-x86" windows/installer/AirTun.iss
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-zips
-          path: artifacts/*.zip
+          name: windows-installers
+          path: artifacts/*-Setup.exe
 
   publish-release:
     name: Publish GitHub Release

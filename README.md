@@ -26,8 +26,9 @@
 
 | Platform | Architecture | Package | Link |
 | :--- | :--- | :--- | :---: |
-| 💻 **Windows** | 64-bit (`x64`) | Standalone ZIP | [⬇️ **Download ZIP**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-windows-x64.zip) |
-| 📱 **Android** | ARM64 (`v8a` - Modern Devices) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-arm64-v8a.apk) |
+| 💻 **Windows** | 64-bit (`x64` - Most PCs) | Setup Installer | [⬇️ **Download Installer (.exe)**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-windows-x64-Setup.exe) |
+| 💻 **Windows** | 32-bit (`x86` - Legacy) | Setup Installer | [⬇️ **Download Installer (.exe)**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-windows-x86-Setup.exe) |
+| 📱 **Android** | ARM64 (`v8a` - Modern Phones) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-arm64-v8a.apk) |
 | 📱 **Android** | Universal (All Devices) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-universal.apk) |
 | 📱 **Android** | ARMv7 (`32-bit` - Legacy) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-armeabi-v7a.apk) |
 | 📦 **All Releases** | Multi-Platform | Checksums & Notes | [🏷️ **Release Notes (v1.0.0)**](https://github.com/omid-io/AirTun/releases/tag/v1.0.0) |
