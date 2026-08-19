@@ -40,6 +40,7 @@ class Socks5Server(
     private var udpRelay: Socks5UdpRelay? = null
 
     val activeConnections = AtomicInteger(0)
+    private val activeClients = ConcurrentHashMap<String, AtomicInteger>()
     val totalBytesUp = AtomicLong(0)
     val totalBytesDown = AtomicLong(0)
 
@@ -80,8 +81,9 @@ class Socks5Server(
 
     private suspend fun handleClient(client: Socket) {
         val clientIp = client.inetAddress?.hostAddress ?: "unknown"
-        val count = activeConnections.incrementAndGet()
-        onClientCountChanged(count)
+        activeConnections.incrementAndGet()
+        activeClients.computeIfAbsent(clientIp) { AtomicInteger(0) }.incrementAndGet()
+        onClientCountChanged(activeClients.size)
 
         try {
             client.soTimeout = AirTunConfig.SOCKET_IDLE_TIMEOUT_MS
@@ -246,8 +248,11 @@ class Socks5Server(
         } catch (_: IOException) {
         } finally {
             try { client.close() } catch (_: Exception) {}
-            val remaining = activeConnections.decrementAndGet().coerceAtLeast(0)
-            onClientCountChanged(remaining)
+            activeConnections.decrementAndGet().coerceAtLeast(0)
+            activeClients.computeIfPresent(clientIp) { _, ref ->
+                if (ref.decrementAndGet() <= 0) null else ref
+            }
+            onClientCountChanged(activeClients.size)
         }
     }
 
