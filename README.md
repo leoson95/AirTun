@@ -1,12 +1,13 @@
 <div align="center">
 
-<img src="branding/logo-with-text.png" width="170" alt="AirTun Logo" />
+<img src="branding/logo-icon.png" width="96" alt="AirTun Logo" />
 
-# ⚡ AirTun (ایر‌تون)
-### Ultra-Fast, Low-Latency Phone Internet Sharing for Windows
-**اشتراک‌گذاری پرسرعت، پایدار و بدون مرز اینترنت گوشی با ویندوز**
+# ⚡ AirTun
+### Ultra-Fast, Low-Latency Mobile Internet &amp; VPN Sharing for Windows
+**اشتراک‌گذاری پرسرعت، پایدار و بدون مرز اینترنت و وی‌پی‌ان گوشی با ویندوز**
 
-[![Build & Test](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#-تست‌ها-و-راستی‌آزمایی)
+[![Release](https://img.shields.io/badge/Release-v1.0.0-00E5FF.svg)](#)
+[![Build & Test](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#-tests--quality-assurance)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows%2010%2F11-blue.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/omid-io/AirTun?style=social)](https://github.com/omid-io/AirTun)
@@ -15,120 +16,158 @@
 
 <img src="docs/screenshots/airtun_showcase.png" width="100%" alt="AirTun Neumorphic Studio Interface" />
 
-</div>
+<br/>
 
----
-
-## 📸 تصاویر محیط برنامه (Screenshots)
-
-<div align="center">
-
-| 💻 نسخه دسکتاپ ویندوز (WinUI 3) | 📱 نسخه موبایل اندروید (Jetpack Compose) |
-| :---: | :---: |
-| <img src="docs/screenshots/windows_client.png" width="400" alt="AirTun Windows Desktop App" /> | <img src="docs/screenshots/android_client.png" width="400" alt="AirTun Android Mobile App" /> |
+[**English**](#-english) • [**فارسی**](#-فارسی)
 
 </div>
 
 ---
 
-## 📖 معرفی پروژه (Overview)
+# 🌐 English
 
-**AirTun** یک راهکار مدرن، سبک و با تاخیر نزدیک به صفر برای اشتراک‌گذاری اینترنت و وی‌پی‌ان گوشی‌های اندرویدی با سیستم‌های ویندوزی است. برخلاف روش‌های سنتی هات‌اسپات که توسط اپراتورها مسدود می‌شوند یا پینگ بازی‌ها را به شدت افزایش می‌دهند، AirTun از **یک هسته بومی SOCKS5/UDP Engine در اندروید** و **یک کلاینت قدرتمند با رابط کاربری WinUI 3 در ویندوز** استفاده می‌کند.
+## 📖 Overview
 
----
+**AirTun** is a modern, ultra-lightweight, zero-config solution designed to share your Android phone's internet and active VPN tunnel with Windows 10/11 computers over Wi-Fi or Hotspot with near-zero latency.
 
-## ✨ ویژگی‌های برجسته (Key Features)
-
-### 🚀 هسته قدرتمند اندروید (Android SOCKS5 Engine)
-- **پشتیبانی کامل از TCP و UDP:** فوروارد مستقیم بسته‌های DNS و پروتکل‌های بلادرنگ (Gaming & Voice).
-- **مصرف بهینه منابع:** مصرف رم زیر ۱۵ مگابایت با معماری Non-blocking Kotlin Coroutines.
-- **کشف خودکار شبکه (UDP Beacon):** برادکست آنی در شبکه هات‌اسپات/وای‌فای روی پورت `47880`.
-- **امنیت بر پایه پین‌کد ۴ رقمی:** رمزنگاری و احراز هویت موقت بر اساس استاندارد RFC 1929.
-- **رابط کاربری مدرن شیشه‌ای (Liquid Glass):** شمارنده زنده ترافیک، نمایش پین بزرگ و QR Code برای اتصال سریع.
-
-### 💻 کلاینت مدرن ویندوز (Windows Desktop Client)
-- **طراحی زیبا بر پایه WinUI 3 & Windows App SDK:** رابط کاربری مدرن مایکا، پشتیبانی ۱۰۰٪ از زبان‌های **فارسی (RTL)** و **انگلیسی (LTR)** همراه با تم‌های روشن و تیره.
-- **حالت‌های دوگانه اتصال (Dual Tunneling Modes):**
-  - 🎮 **Full System TUN Mode:** ساخت اینترفیس مجازی WinTun جهت پوشش ۱۰۰٪ ترافیک ویندوز (بازی‌های آنلاین، تلگرام، ابزارهای برنامه‌نویسی `git`, `npm`, `pip`, `docker` و وب).
-  - 🌐 **Fast Web Proxy Mode:** تنظیم آنی و سبک پروکسی سیستم برای مرورگرها همراه با قابلیت بازیابی خودکار پس از کرش (Crash Recovery).
-- **🇮🇷 کنترل هوشمند روتینگ (Smart Routing & Domestic Bypass):**
-  - کلید دایرکت کردن سایت‌های داخلی: دامنه‌های `.ir`، درگاه‌های بانکی شاپرک و سامانه‌های ملی بدون عبور از تونل باز می‌شوند تا اتصال بانکی قطع نشود و حجم مصرف نگردد.
-  - **موتور قوانین سفارشی (Custom Rules Engine):** تعریف بی‌نهایت قانون بر اساس دامنه یا کلمه کلیدی به سبک Geosite / V2Ray با رفتارهای Direct, Proxy, Block.
-- **🌍 تشخیص خودکار آی‌پی و کشور خروجی (GeoIP & Outbound IP):**
-  - استعلام لحظه‌ای آی‌پی پابلیک، پرچم ایموجی و نام کشور متصل (مانند `🇩🇪 Germany` یا `🇫🇮 Finland`) و نام ISP / دیتاسنتر.
-- **📊 مانیتورینگ زنده ترافیک و سرعت:** نمایش سرعت لحظه‌ای آپلود/دانلود، حجم کل مصرفی، پینگ به گوشی و زمان اتصال.
-- **سیستم تری (System Tray):** اجرای روان در پس‌زمینه و خروج ایمن (Safe Teardown).
+Unlike traditional mobile hotspots that get restricted or throttled by carriers and add heavy ping jitter to games, AirTun pairs a high-performance **native Kotlin SOCKS5 & UDP relay engine on Android** with a sleek **Neumorphic WinUI 3 desktop client for Windows**.
 
 ---
 
-## 🏗️ معماری سیستم (Architecture)
+## ✨ Key Features
+
+### 📱 Android Server Engine
+- **Full TCP & UDP Relay:** High-throughput forwarding for DNS queries and real-time gaming/voice traffic.
+- **Ultra-Low Memory Footprint:** Consumes under 15 MB RAM powered by non-blocking Kotlin Coroutines.
+- **LAN Auto-Discovery (UDP Beacon):** Instantly announces presence across the local network/hotspot on port `47880`.
+- **RFC 1929 4-Digit Security PIN:** Ephemeral cryptographic token pairing preventing unauthorized connections.
+- **Unique Physical Device Counter:** Accurately tracks distinct connected computers rather than raw socket counts.
+- **Studio Neumorphic UI:** Jetpack Compose dark studio aesthetics with real-time bandwidth metrics.
+
+### 💻 Windows Desktop Client
+- **Modern WinUI 3 & .NET 8 App:** Native Windows App SDK dark neumorphic styling with English (LTR) and Persian (RTL) support.
+- **Dual Tunneling Modes:**
+  - ⚡ **Full System TUN Mode:** High-speed Wintun virtual adapter routing 100% of Windows traffic (online gaming, CLI tools like `git`/`npm`/`docker`, Telegram, and all apps).
+  - 🌐 **Web Proxy Mode:** Instant, lightweight WinINet system proxy configuration with transactional crash recovery.
+- **🇮🇷 Smart Routing & Domestic Bypass:**
+  - One-click `.ir` and local banking direct bypass — national services open directly without routing through the proxy or wasting data.
+  - **Custom Rules Engine:** Add custom domain or IP wildcard rules (`*.example.com`) with instant filtering.
+- **🌍 Real-Time GeoIP & Outbound Detector:** Live query of your external public IP, country flag, and ISP name.
+- **📊 Real-Time Bandwidth Waveform:** Interactive graph showing upload/download throughput, peak speeds, and connection latency.
+- **System Tray Support:** Background minimization and safe teardown on exit.
+
+---
+
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    subgraph Android["📱 گوشی اندروید (AirTun Server)"]
-        UI_A["Jetpack Compose UI (PIN / QR)"]
+    subgraph Android["📱 Android Phone (AirTun Server)"]
+        UI_A["Jetpack Compose Studio UI"]
         Beacon["UDP Beacon Broadcaster (:47880)"]
         SocksTCP["SOCKS5 TCP Engine (:10808)"]
         SocksUDP["SOCKS5 UDP Relay (:10808)"]
         Auth["RFC 1929 4-Digit PIN Auth"]
     end
 
-    subgraph Windows["💻 سیستم ویندوز (AirTun Client)"]
-        UI_W["WinUI 3 Liquid Glass UI (FA / EN)"]
+    subgraph Windows["💻 Windows PC (AirTun Client)"]
+        UI_W["WinUI 3 Neumorphic UI (FA / EN)"]
         Disc["UDP LAN Discovery Client"]
-        Routing["Smart Routing & Iran Bypass Engine"]
+        Routing["Smart Routing & Bypass Engine"]
         Geo["GeoIP & Outbound IP Detector"]
-        ModeTun["Full System TUN Mode (WinTun Adapter)"]
-        ModeProxy["Fast Web Proxy (WinINET Transactional)"]
+        ModeTun["System TUN Mode (Wintun Driver)"]
+        ModeProxy["Web Proxy Mode (WinINet)"]
     end
 
-    subgraph Target["🌐 اینترنت / بازی‌ها"]
-        Web["اینترنت جهانی / یوتیوب / گیم"]
-        Domestic["سایت‌های داخلی / بانک‌ها / .ir (Direct)"]
+    subgraph Target["🌐 Destinations"]
+        Web["Global Internet / Gaming / Apps"]
+        Domestic["Domestic Websites & Banking (Direct)"]
     end
 
-    Beacon -.->|"کشف خودکار (Port 47880)"| Disc
+    Beacon -.->|"Auto-Discovery (Port 47880)"| Disc
     Disc --> UI_W
     UI_W --> Routing
-    Routing -->|"ترافیک خارجی"| ModeTun
-    Routing -->|"سایت‌های ایرانی"| Domestic
-    ModeTun -->|"تونل رمزنگاری‌شده"| SocksTCP
-    ModeTun -->|"بسته‌های UDP/DNS"| SocksUDP
+    Routing -->|"Foreign / Tunneled"| ModeTun
+    Routing -->|"Domestic / Bypass"| Domestic
+    ModeTun -->|"Encrypted Tunnel"| SocksTCP
+    ModeTun -->|"UDP / DNS Packets"| SocksUDP
     SocksTCP --> Web
     SocksUDP --> Web
 ```
 
 ---
 
-## 🚀 راهنمای راه‌اندازی و اجرا (Quick Start)
+## 🚀 Quick Start Guide
 
-### ۱. اجرای نسخه اندروید:
-1. فایل `AirTun.apk` را روی گوشی نصب کنید.
-2. هات‌اسپات گوشی را روشن کنید.
-3. برنامه AirTun را باز کرده و دکمه **شروع (Start)** را لمس کنید. پین‌کد ۴ رقمی روی صفحه ظاهر می‌شود.
+### 1. Android Phone Setup:
+1. Install `AirTun.apk` on your phone.
+2. Enable Mobile Hotspot or connect to the same Wi-Fi network as your PC.
+3. Open AirTun and tap the large **START** button. A 4-digit PIN will appear on screen.
 
-### ۲. اجرای نسخه ویندوز:
-1. لپ‌تاپ/کامپیوتر را به هات‌اسپات گوشی وصل کنید.
-2. فایل `AirTun.App.exe` را اجرا کنید.
-3. گوشی شما به صورت خودکار در لیست دستگاه‌ها ظاهر می‌شود. روی آن کلیک کنید، پین‌کد ۴ رقمی را وارد کرده و دکمه **اتصال (Connect)** را بزنید.
+### 2. Windows PC Setup:
+1. Connect your PC to the phone's Hotspot / Wi-Fi.
+2. Launch `AirTun.exe`.
+3. Your phone will be detected automatically. Enter the 4-digit PIN and click **Connect to Phone**.
 
 ---
 
-## 🧪 تست‌ها و راستی‌آزمایی (Tests & Quality Assurance)
+## 🧪 Tests & Quality Assurance
 
-پروژه دارای پوشش تست خودکار روی هر دو پلتفرم است:
+AirTun includes automated unit test suites for both client and server:
 
 ```bash
-# اجرای تست‌های واحد ویندوز (36 تست پاس‌شده)
-dotnet test windows/AirTun.sln
+# Run Windows .NET 8 unit tests (36 passing tests)
+dotnet test windows/AirTun.App.Tests/AirTun.App.Tests.csproj
 
-# اجرای بیلد کامل ویندوز (0 Warning, 0 Error)
-dotnet build windows/AirTun.sln
+# Build Windows Release
+dotnet publish windows/AirTun.App/AirTun.App.csproj -c Release -p:Platform=x64 -o windows/publish/AirTun
 
-# اجرای تست‌های واحد اندروید (24 تست پاس‌شده)
-cd android
-./gradlew testDebugUnitTest
+# Run Android unit tests
+cd android && ./gradlew testDebugUnitTest
 ```
+
+---
+
+# 🇮🇷 فارسی
+
+## 📖 معرفی پروژه
+
+**AirTun (ایر‌تون)** یک راهکار مدرن، سبک و با تاخیر نزدیک به صفر برای اشتراک‌گذاری اینترنت و وی‌پی‌ان گوشی‌های اندرویدی با سیستم‌های ویندوزی است. برخلاف روش‌های سنتی هات‌اسپات که توسط اپراتورها مسدود می‌شوند یا پینگ بازی‌ها را به شدت افزایش می‌دهند، AirTun از **یک هسته بومی SOCKS5/UDP در اندروید** و **یک کلاینت قدرتمند با رابط کاربری WinUI 3 در ویندوز** استفاده می‌کند.
+
+---
+
+## ✨ ویژگی‌های برجسته
+
+### 📱 هسته قدرتمند اندروید (Android Server)
+- **پشتیبانی کامل از TCP و UDP:** فوروارد مستقیم بسته‌های DNS و پروتکل‌های بلادرنگ بازی و تماس صوتی.
+- **مصرف بهینه منابع:** مصرف رم زیر ۱۵ مگابایت با معماری کاتلین کوروتینز.
+- **کشف خودکار شبکه (UDP Beacon):** برادکست آنی در شبکه هات‌اسپات/وای‌فای روی پورت `47880`.
+- **امنیت بر پایه پین‌کد ۴ رقمی:** رمزنگاری و احراز هویت موقت بر اساس استاندارد RFC 1929.
+- **شمارش دقیق دستگاه‌های فیزیکی:** رهگیری آی‌پی‌های یکتای متصل به جای سوکت‌های خام.
+
+### 💻 کلاینت مدرن ویندوز (Windows Desktop Client)
+- **طراحی زیبا بر پایه WinUI 3 & .NET 8:** رابط کاربری مدرن نئومورفیک تیره، پشتیبانی ۱۰۰٪ از زبان‌های فارسی (RTL) و انگلیسی (LTR).
+- **حالت‌های دوگانه اتصال:**
+  - ⚡ **Full System TUN Mode:** ساخت اینترفیس مجازی WinTun جهت پوشش ۱۰۰٪ ترافیک کل ویندوز (بازی‌های آنلاین، تلگرام، ابزارهای برنامه‌نویسی `git`, `npm`, `pip`, `docker` و وب).
+  - 🌐 **Fast Web Proxy Mode:** تنظیم آنی و سبک پروکسی سیستم برای مرورگرها همراه با بازیابی خودکار.
+- **🇮🇷 کنترل هوشمند روتینگ (Smart Routing):** دایرکت خودکار سایت‌های بانکی و دامنه‌های `.ir` به همراه قابلیت تعریف قوانین سفارشی.
+- **🌍 تشخیص خودکار آی‌پی و کشور خروجی (GeoIP):** استعلام لحظه‌ای آی‌پی، پرچم کشور و نام اپراتور اینترنت.
+- **📊 مانیتورینگ زنده ترافیک و سرعت:** نمودار لایو سرعت آپلود/دانلود، حجم کل و پینگ.
+- **سیستم تری (System Tray):** اجرای روان در پس‌زمینه.
+
+---
+
+## 🚀 راهنمای سریع راه‌اندازی
+
+### ۱. اجرای نسخه اندروید:
+1. فایل `AirTun.apk` را روی گوشی نصب کنید.
+2. هات‌اسپات گوشی را روشن کنید (یا گوشی و کامپیوتر را به یک مودم وای‌فای وصل کنید).
+3. برنامه AirTun را باز کرده و دکمه **START** را لمس کنید تا پین‌کد ۴ رقمی ظاهر شود.
+
+### ۲. اجرای نسخه ویندوز:
+1. کامپیوتر را به هات‌اسپات گوشی وصل کنید.
+2. فایل `AirTun.exe` را اجرا کنید.
+3. گوشی شما به صورت خودکار در لیست دستگاه‌ها ظاهر می‌شود. روی آن کلیک کنید، پین‌کد ۴ رقمی را وارد کرده و دکمه **اتصال (Connect)** را بزنید.
 
 ---
 
