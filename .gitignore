@@ -42,3 +42,7 @@ windows/publish/
 
 
 preview/
+
+GEMINI.md
+*.gemini.md
+.gemini/
