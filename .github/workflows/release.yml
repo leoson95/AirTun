@@ -33,8 +33,9 @@ jobs:
 
       - name: Generate Temporary Release Keystore
         run: |
+          mkdir -p android/app
           keytool -genkeypair -v \
-            -keystore android/release.keystore \
+            -keystore android/app/release.keystore \
             -alias airtun \
             -keyalg RSA \
             -keysize 2048 \
