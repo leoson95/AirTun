@@ -50,4 +50,5 @@ Name: "{group}\{cm:UninstallProgram,AirTun}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\AirTun"; Filename: "{app}\AirTun.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\AirTun.exe"; Description: "{cm:LaunchProgram,AirTun}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\AirTun.exe"; Description: "{cm:LaunchProgram,AirTun}"; Flags: nowait postinstall skipifsilent shellexec
+

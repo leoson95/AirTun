@@ -24,11 +24,22 @@ public partial class App : Application
     private const int SW_RESTORE = 9;
     private const int SW_SHOW = 5;
 
+    private static void LogCrash(string message)
+    {
+        try
+        {
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AirTun");
+            Directory.CreateDirectory(dir);
+            File.AppendAllText(Path.Combine(dir, "crash.log"), $"{DateTime.Now} {message}\n");
+        }
+        catch { }
+    }
+
     public App()
     {
         this.UnhandledException += (s, e) =>
         {
-            File.AppendAllText(@"C:\Tools\airtun\crash.log", $"{DateTime.Now} [App.UnhandledException]: {e.Message} \n {e.Exception}\n");
+            LogCrash($"[App.UnhandledException]: {e.Message} \n {e.Exception}");
             e.Handled = true;
         };
 
@@ -66,7 +77,7 @@ public partial class App : Application
         }
         catch (Exception ex)
         {
-            File.AppendAllText(@"C:\Tools\airtun\crash.log", $"{DateTime.Now} [OnLaunched Exception]: {ex}\n");
+            LogCrash($"[OnLaunched Exception]: {ex}");
         }
     }
 }

@@ -11,7 +11,7 @@
         </Grid.RowDefinitions>
 
         <!-- Custom Seamless Dark TitleBar -->
-        <Grid Grid.Row="0" x:Name="AppTitleBar" Background="Transparent" Padding="14,0,14,0" PointerPressed="AppTitleBar_PointerPressed">
+        <Grid Grid.Row="0" x:Name="AppTitleBar" Background="Transparent" Padding="14,0,14,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />

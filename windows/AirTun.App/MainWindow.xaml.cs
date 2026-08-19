@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Graphics;
 using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Input;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -198,27 +200,38 @@ public sealed partial class MainWindow : Window
                     }
                 }
             };
+
+            // Register title bar drag region using WinUI 3's own input pipeline.
+            // This is the correct approach — no Win32 modal loops, no XAML/Win32 pipeline mismatch.
+            // AppTitleBar height = 64px (Row 0 in MainWindow.xaml), button area on right ≈ 140px.
+            // Drag region covers the full-width title bar area excluding the right-side window buttons.
+            var nonClientInput = InputNonClientPointerSource.GetForWindowId(_appWindow.Id);
+            _appWindow.Changed += (_, _) => UpdateDragRegion(nonClientInput);
+            UpdateDragRegion(nonClientInput);
         }
     }
 
-    [DllImport("user32.dll")]
-    private static extern bool ReleaseCapture();
-
-    [DllImport("user32.dll")]
-    private static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
-
-    private const uint WM_NCLBUTTONDOWN = 0x00A1;
-    private const int HT_CAPTION = 0x2;
-
-    private void AppTitleBar_PointerPressed(object sender, PointerRoutedEventArgs e)
+    private void UpdateDragRegion(InputNonClientPointerSource nonClientInput)
     {
-        if (e.GetCurrentPoint(AppTitleBar).Properties.IsLeftButtonPressed)
+        if (_appWindow is null) return;
+
+        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+        uint dpi = 96;
+        try { dpi = GetDpiForWindow(hWnd); } catch { }
+        if (dpi < 96) dpi = 96;
+        double scale = dpi / 96.0;
+
+        int titleBarHeight = (int)Math.Round(64 * scale);      // Grid Row 0 height in xaml
+        int rightButtonsWidth = (int)Math.Round(140 * scale);  // window control buttons area
+        int totalWidth = _appWindow.Size.Width;
+
+        int dragWidth = totalWidth - rightButtonsWidth;
+        if (dragWidth < 1) dragWidth = 1;
+
+        nonClientInput.SetRegionRects(NonClientRegionKind.Caption, new RectInt32[]
         {
-            e.Handled = true;
-            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
-            ReleaseCapture();
-            PostMessage(hWnd, WM_NCLBUTTONDOWN, (IntPtr)HT_CAPTION, IntPtr.Zero);
-        }
+            new RectInt32(0, 0, dragWidth, titleBarHeight)
+        });
     }
 
     private void BtnWinMin_Click(object sender, RoutedEventArgs e)

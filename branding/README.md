@@ -4,7 +4,7 @@
 
 ---
 
-## 📁 ساختار پوشه برندینگ (`C:\Tools\airtun\branding`)
+## 📁 ساختار پوشه برندینگ (`E:\programming\airtun\branding`)
 
 ```text
 branding/
@@ -41,7 +41,7 @@ branding/
 ## 💻 ۱. راهنمای استفاده در کلاینت ویندوز (`AirTun.App`)
 
 فایل‌های مورد نیاز هم‌اکنون به صورت مستقیم در مسیر زیر قرار گرفته‌اند:  
-`c:\Tools\airtun\windows\AirTun.App\Assets\`
+`E:\programming\airtun\windows\AirTun.App\Assets\`
 
 ### تنظیم آیکون فایل اجرایی در `AirTun.App.csproj`:
 ```xml
@@ -70,7 +70,7 @@ appWindow.SetIcon(@"Assets\app.ico");
 ## 📱 ۲. راهنمای استفاده در سرور اندروید (`android`)
 
 فایل‌های mipmap و drawable مستقیماً در مسیر منابع پروژه اندروید تزریق شده‌اند:  
-`c:\Tools\airtun\android\app\src\main\res\`
+`E:\programming\airtun\android\app\src\main\res\`
 
 ### تنظیم در `AndroidManifest.xml`:
 ```xml

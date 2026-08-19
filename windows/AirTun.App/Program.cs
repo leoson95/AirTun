@@ -11,16 +11,23 @@ public static class Program
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool SetDllDirectory(string lpPathName);
 
+    private static void LogCrash(string message)
+    {
+        try
+        {
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AirTun");
+            Directory.CreateDirectory(dir);
+            File.AppendAllText(Path.Combine(dir, "crash.log"), $"{DateTime.Now} {message}\n");
+        }
+        catch { }
+    }
+
     [STAThread]
     private static void Main(string[] args)
     {
         AppDomain.CurrentDomain.UnhandledException += (s, e) =>
         {
-            try
-            {
-                File.AppendAllText(@"C:\Tools\airtun\crash.log", $"{DateTime.Now} [AppDomain.UnhandledException]: {e.ExceptionObject}\n");
-            }
-            catch { }
+            LogCrash($"[AppDomain.UnhandledException]: {e.ExceptionObject}");
         };
 
         try
@@ -37,11 +44,7 @@ public static class Program
         }
         catch (Exception ex)
         {
-            try
-            {
-                File.AppendAllText(@"C:\Tools\airtun\crash.log", $"{DateTime.Now} [Main Exception]: {ex}\n");
-            }
-            catch { }
+            LogCrash($"[Main Exception]: {ex}");
         }
     }
 }
