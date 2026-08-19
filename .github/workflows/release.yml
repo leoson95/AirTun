@@ -116,7 +116,9 @@ jobs:
 
           # 3. Compile Inno Setup Installer
           New-Item -ItemType Directory -Path artifacts -Force
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$cleanVer" "/DAppArch=x64" "/DSourceDir=..\..\win-x64" windows/installer/AirTun.iss
+          $iscc = if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") { "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" } else { "iscc" }
+          & $iscc "/DAppVersion=$cleanVer" "/DAppArch=x64" "/DSourceDir=..\..\win-x64" windows/installer/AirTun.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC x64 compilation failed with exit code $LASTEXITCODE" }
 
       - name: Build and Package Windows x86 Installer
         shell: pwsh
@@ -135,7 +137,9 @@ jobs:
           dotnet publish windows/AirTun.App/AirTun.App.csproj -c Release -p:Platform=x86 -o win-x86
 
           # 3. Compile Inno Setup Installer
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "/DAppVersion=$cleanVer" "/DAppArch=x86" "/DSourceDir=..\..\win-x86" windows/installer/AirTun.iss
+          $iscc = if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") { "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" } else { "iscc" }
+          & $iscc "/DAppVersion=$cleanVer" "/DAppArch=x86" "/DSourceDir=..\..\win-x86" windows/installer/AirTun.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC x86 compilation failed with exit code $LASTEXITCODE" }
 
       - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4

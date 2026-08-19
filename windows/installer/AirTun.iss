@@ -29,7 +29,9 @@ Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
+#if AppArch == "x64"
 ArchitecturesInstallIn64BitMode=x64compatible
+#endif
 CloseApplications=yes
 RestartApplications=no
 
