@@ -19,6 +19,7 @@ public sealed class AppController : IDisposable
     public string ActiveMode { get; set; } = "tun";
 
     public RoutingManager Routing { get; } = new();
+    public TunRoutingManager TunRouting { get; } = new();
     public GeoIpService GeoIp { get; } = new();
     public AppSettings Settings { get; private set; } = new();
     public GeoIpInfo? CurrentGeo { get; private set; }
@@ -35,7 +36,14 @@ public sealed class AppController : IDisposable
         _tunSession = new WinTunTunnelSession(new ElevatedTunnelProcessHost(tunExe));
 
         _discovery.DevicesChanged += devices => DevicesChanged?.Invoke(devices);
-        _discovery.DiagnosticLog += msg => LocalLog.Add(msg);
+        _discovery.DiagnosticLog += msg => LocalLog.Discovery(msg);
+        TunRouting.LogGenerated += msg => LocalLog.Add(msg);
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            try { TunRouting.PurgeAllRoutes(); } catch { }
+            try { _proxySession.Disconnect(); } catch { }
+        };
 
         LoadSavedSettings();
     }
@@ -63,7 +71,7 @@ public sealed class AppController : IDisposable
     {
         _discovery.Start();
         _discovery.SetProbing(true);
-        LocalLog.Add("Discovery started on port " + LanDiscovery.Port);
+        LocalLog.Discovery("Discovery started on port " + LanDiscovery.Port);
     }
 
     public void StopDiscovery()
@@ -77,29 +85,39 @@ public sealed class AppController : IDisposable
             return false;
 
         Transition(ConnectionState.Preparing);
-        LocalLog.Add($"Connecting to {host}:{port} ({ActiveMode} mode) with PIN {pinCode}...");
+        LocalLog.Info($"Connecting to {host}:{port} ({ActiveMode} mode) with PIN {pinCode}...");
 
         if (ActiveMode == "proxy")
         {
             var bypassList = Routing.BuildWinInetBypassList();
-            LocalLog.Add($"Applying system proxy with {bypassList.Split(';').Length} bypass entries...");
+            LocalLog.Info($"Applying system proxy with {bypassList.Split(';').Length} bypass entries...");
             var res = await Task.Run(() => _proxySession.Connect(host, port, bypassList));
             if (!res.Ok)
             {
-                LocalLog.Add($"Proxy connect failed: {res.ErrorCode}");
+                LocalLog.Error($"Proxy connect failed: {res.ErrorCode}");
                 Transition(new ConnectionState.ErrorState(ErrorCode.PortInUse, res.ErrorCode));
                 return false;
             }
         }
         else
         {
+            LocalLog.Tun($"Starting Wintun tunnel session to {host}:{port}...");
             var res = await Task.Run(() => _tunSession.Connect(host, port, pinCode));
             if (!res.Ok)
             {
-                LocalLog.Add($"TUN connect failed: {res.ErrorCode}");
+                LocalLog.Error($"TUN connect failed: {res.ErrorCode}");
                 Transition(new ConnectionState.ErrorState(ErrorCode.TunnelFailed, res.ErrorCode));
                 return false;
             }
+
+            LocalLog.Tun("Wintun tunnel adapter connected.");
+            // Apply TUN bypass routes (Iranian GeoIP CIDRs, LAN RFC1918, Custom Rules)
+            await TunRouting.ApplyTunBypassRoutesAsync(
+                gateway: null,
+                bypassDomestic: Routing.BypassDomestic,
+                bypassLan: Routing.BypassLan,
+                customRules: Routing.CustomRules
+            ).ConfigureAwait(false);
         }
 
         Transition(new ConnectionState.ConnectedState(
@@ -112,41 +130,130 @@ public sealed class AppController : IDisposable
 
         StartStatsPolling(host, port);
         _ = RefreshGeoLocationAsync();
-        LocalLog.Add("Connected successfully!");
+        LocalLog.Info("Connected successfully!");
         return true;
+    }
+
+    public async Task SetBypassDomesticAsync(bool enabled)
+    {
+        Routing.BypassDomestic = enabled;
+        SaveCurrentSettings();
+
+        if (State is ConnectionState.ConnectedState connected)
+        {
+            if (connected.Mode == "tun")
+            {
+                await TunRouting.SetDomesticBypassAsync(enabled).ConfigureAwait(false);
+            }
+            else if (connected.Mode == "proxy")
+            {
+                var bypassList = Routing.BuildWinInetBypassList();
+                _proxySession.Connect(connected.Host, connected.Port, bypassList);
+                LocalLog.Routing($"System proxy updated. Domestic bypass: {enabled}");
+            }
+        }
+    }
+
+    public async Task SetBypassLanAsync(bool enabled)
+    {
+        Routing.BypassLan = enabled;
+        SaveCurrentSettings();
+
+        if (State is ConnectionState.ConnectedState connected)
+        {
+            if (connected.Mode == "tun")
+            {
+                await TunRouting.SetLanBypassAsync(enabled).ConfigureAwait(false);
+            }
+            else if (connected.Mode == "proxy")
+            {
+                var bypassList = Routing.BuildWinInetBypassList();
+                _proxySession.Connect(connected.Host, connected.Port, bypassList);
+                LocalLog.Routing($"System proxy updated. LAN bypass: {enabled}");
+            }
+        }
+    }
+
+    public async Task AddCustomRuleAsync(RoutingRule rule)
+    {
+        Routing.AddCustomRule(rule);
+        SaveCurrentSettings();
+
+        if (State is ConnectionState.ConnectedState connected)
+        {
+            if (connected.Mode == "tun")
+            {
+                await TunRouting.AddCustomRuleAsync(rule).ConfigureAwait(false);
+            }
+            else if (connected.Mode == "proxy")
+            {
+                var bypassList = Routing.BuildWinInetBypassList();
+                _proxySession.Connect(connected.Host, connected.Port, bypassList);
+                LocalLog.Routing($"System proxy updated with rule: {rule.Pattern}");
+            }
+        }
+        else
+        {
+            LocalLog.Routing($"Added custom direct bypass rule: {rule.Pattern}");
+        }
+    }
+
+    public void RemoveCustomRule(RoutingRule rule)
+    {
+        Routing.RemoveCustomRule(rule);
+        SaveCurrentSettings();
+
+        if (State is ConnectionState.ConnectedState connected)
+        {
+            if (connected.Mode == "tun")
+            {
+                TunRouting.RemoveCustomRule(rule);
+            }
+            else if (connected.Mode == "proxy")
+            {
+                var bypassList = Routing.BuildWinInetBypassList();
+                _proxySession.Connect(connected.Host, connected.Port, bypassList);
+                LocalLog.Routing($"System proxy updated after removing rule: {rule.Pattern}");
+            }
+        }
+        else
+        {
+            LocalLog.Routing($"Removed rule: {rule.Pattern}");
+        }
     }
 
     public async Task RefreshGeoLocationAsync()
     {
         try
         {
-            LocalLog.Add("Resolving outbound location and IP...");
+            LocalLog.Info("Resolving outbound location and IP...");
             var geo = await GeoIp.FetchOutboundGeoAsync().ConfigureAwait(false);
             CurrentGeo = geo;
             if (geo is not null)
             {
-                LocalLog.Add($"Outbound IP: {geo.Ip} ({geo.Country} {geo.FlagEmoji}) - ISP: {geo.Isp}");
+                LocalLog.Info($"Outbound IP: {geo.Ip} ({geo.Country} {geo.FlagEmoji}) - ISP: {geo.Isp}");
             }
             GeoLocationUpdated?.Invoke(geo);
         }
         catch (Exception ex)
         {
-            LocalLog.Add($"GeoIP resolution failed: {ex.Message}");
+            LocalLog.Error($"GeoIP resolution failed: {ex.Message}");
         }
     }
 
     public void Disconnect()
     {
-        LocalLog.Add("Disconnecting...");
+        LocalLog.Info("Disconnecting...");
         StopStatsPolling();
         CurrentGeo = null;
         GeoLocationUpdated?.Invoke(null);
 
+        try { TunRouting.PurgeAllRoutes(); } catch { }
         try { _proxySession.Disconnect(); } catch { }
         try { _tunSession.Disconnect(); } catch { }
 
         Transition(ConnectionState.Idle);
-        LocalLog.Add("Disconnected.");
+        LocalLog.Info("Disconnected.");
     }
 
     private void StartStatsPolling(string host, int port)
@@ -158,20 +265,18 @@ public sealed class AppController : IDisposable
         _ = Task.Run(async () =>
         {
             int consecutiveFailures = 0;
-            // Wait a brief moment for adapter to be ready, then read baseline
             await Task.Delay(500, token).ConfigureAwait(false);
             var (baseUp, baseDown) = ReadAirTunInterfaceBytes();
 
             while (!token.IsCancellationRequested)
             {
-                // Quick TCP health check to detect if phone server stopped
                 bool isAlive = await CheckHostHealthAsync(host, port, 1200).ConfigureAwait(false);
                 if (!isAlive)
                 {
                     consecutiveFailures++;
                     if (consecutiveFailures >= 2)
                     {
-                        LocalLog.Add("Phone server stopped or unreachable. Disconnecting...");
+                        LocalLog.Error("Phone server stopped or unreachable. Disconnecting...");
                         _ = Task.Run(() => Disconnect());
                         break;
                     }
@@ -249,8 +354,9 @@ public sealed class AppController : IDisposable
     {
         if (_proxySession.RecoverIfCrashed())
         {
-            LocalLog.Add("Recovered proxy settings from previous ungraceful exit.");
+            LocalLog.Info("Recovered proxy settings from previous ungraceful exit.");
         }
+        try { TunRouting.PurgeAllRoutes(); } catch { }
     }
 
     public void Dispose()

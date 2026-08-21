@@ -117,6 +117,7 @@ public sealed class WinTunTunnelSession(WinTunTunnelSession.IProcessHost process
     }
 }
 
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public sealed class ElevatedTunnelProcessHost(string executablePath) : WinTunTunnelSession.IProcessHost
 {
     private const int ErrorCancelled = 1223;

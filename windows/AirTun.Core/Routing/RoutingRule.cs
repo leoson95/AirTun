@@ -1,3 +1,5 @@
+using System.Net;
+
 namespace AirTun.Core.Routing;
 
 public enum RuleType
@@ -47,8 +49,27 @@ public sealed class RoutingRule
                                      || target.Equals(Pattern.TrimStart('.'), StringComparison.OrdinalIgnoreCase),
             RuleType.DomainFull => target.Equals(Pattern, StringComparison.OrdinalIgnoreCase),
             RuleType.DomainKeyword => target.Contains(Pattern, StringComparison.OrdinalIgnoreCase),
-            RuleType.IpCidr => target.StartsWith(Pattern.Split('/')[0], StringComparison.OrdinalIgnoreCase),
+            RuleType.IpCidr => TryMatchCidr(Pattern, target),
             _ => false,
         };
+    }
+
+    private static bool TryMatchCidr(string pattern, string target)
+    {
+        if (IPAddress.TryParse(target, out var targetIp) && targetIp.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        {
+            try
+            {
+                var route = pattern.Contains('/')
+                    ? RouteEntry.FromCidr(pattern, "0.0.0.0")
+                    : RouteEntry.ForHost(pattern, "0.0.0.0");
+                return route.ContainsIp(targetIp);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        return false;
     }
 }

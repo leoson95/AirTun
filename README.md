@@ -6,7 +6,7 @@
 ### Ultra-Fast, Low-Latency Mobile Internet &amp; VPN Sharing for Windows
 **اشتراک‌گذاری پرسرعت، پایدار و بدون مرز اینترنت و وی‌پی‌ان گوشی با ویندوز**
 
-[![Release](https://img.shields.io/badge/Release-v1.0.0-00E5FF.svg)](#)
+[![Release](https://img.shields.io/badge/Release-v1.1.0-00E5FF.svg)](https://github.com/omid-io/AirTun/releases/latest)
 [![Build & Test](https://img.shields.io/badge/Build-Passing-brightgreen.svg)](#-tests--quality-assurance)
 [![Platform](https://img.shields.io/badge/Platform-Android%20%7C%20Windows%2010%2F11-blue.svg)](#)
 [![License](https://img.shields.io/badge/License-MIT-orange.svg)](LICENSE)
@@ -26,12 +26,12 @@
 
 | Platform | Architecture | Package | Link |
 | :--- | :--- | :--- | :---: |
-| 💻 **Windows** | 64-bit (`x64` - Most PCs) | Setup Installer | [⬇️ **Download Installer (.exe)**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-windows-x64-Setup.exe) |
-| 💻 **Windows** | 32-bit (`x86` - Legacy) | Setup Installer | [⬇️ **Download Installer (.exe)**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-windows-x86-Setup.exe) |
-| 📱 **Android** | ARM64 (`v8a` - Modern Phones) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-arm64-v8a.apk) |
-| 📱 **Android** | Universal (All Devices) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-universal.apk) |
-| 📱 **Android** | ARMv7 (`32-bit` - Legacy) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.0.0-armeabi-v7a.apk) |
-| 📦 **All Releases** | Multi-Platform | Checksums & Notes | [🏷️ **Release Notes (v1.0.0)**](https://github.com/omid-io/AirTun/releases/tag/v1.0.0) |
+| 💻 **Windows** | 64-bit (`x64` - Most PCs) | Setup Installer | [⬇️ **Download Installer (.exe)**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.1.0-windows-x64-Setup.exe) |
+| 💻 **Windows** | 32-bit (`x86` - Legacy) | Setup Installer | [⬇️ **Download Installer (.exe)**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.1.0-windows-x86-Setup.exe) |
+| 📱 **Android** | ARM64 (`v8a` - Modern Phones) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.1.0-arm64-v8a.apk) |
+| 📱 **Android** | Universal (All Devices) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.1.0-universal.apk) |
+| 📱 **Android** | ARMv7 (`32-bit` - Legacy) | Signed APK | [⬇️ **Download APK**](https://github.com/omid-io/AirTun/releases/latest/download/AirTun-v1.1.0-armeabi-v7a.apk) |
+| 📦 **All Releases** | Multi-Platform | Checksums & Notes | [🏷️ **Release Notes (v1.1.0)**](https://github.com/omid-io/AirTun/releases/tag/v1.1.0) |
 
 </div>
 

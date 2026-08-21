@@ -46,3 +46,4 @@ preview/
 GEMINI.md
 *.gemini.md
 .gemini/
+.agents/

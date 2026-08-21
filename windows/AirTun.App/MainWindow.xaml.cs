@@ -626,12 +626,56 @@ public sealed partial class MainWindow : Window
         _polylineUpload.Points = upLinePoints;
     }
 
+    private bool _autoScrollEnabled = true;
+
+    private void ScrollLogs_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (ScrollLogs.ScrollableHeight > 0)
+        {
+            bool isNearBottom = ScrollLogs.VerticalOffset >= (ScrollLogs.ScrollableHeight - 40);
+            if (_autoScrollEnabled != isNearBottom)
+            {
+                _autoScrollEnabled = isNearBottom;
+                UpdateAutoScrollButtonUi();
+            }
+        }
+    }
+
+    private void BtnAutoScrollToggle_Click(object sender, RoutedEventArgs e)
+    {
+        _autoScrollEnabled = !_autoScrollEnabled;
+        UpdateAutoScrollButtonUi();
+        if (_autoScrollEnabled)
+        {
+            ScrollLogs.UpdateLayout();
+            ScrollLogs.ChangeView(null, ScrollLogs.ScrollableHeight, null, disableAnimation: false);
+        }
+    }
+
+    private void UpdateAutoScrollButtonUi()
+    {
+        DispatcherQueue.TryEnqueue(() =>
+        {
+            var accent = (Brush)Application.Current.Resources["AccentBrush"];
+            var muted = (Brush)Application.Current.Resources["LabelSecondary"];
+            BtnAutoScrollToggle.Foreground = _autoScrollEnabled ? accent : muted;
+            BtnAutoScrollToggle.Content = _autoScrollEnabled ? "⇣ Auto: ON" : "⇣ Auto: OFF";
+        });
+    }
+
     private void OnLogChanged()
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            var entries = LocalLog.Snapshot();
-            TextLogsViewer.Text = string.Join(Environment.NewLine, entries.Select(e => $"[{e.ElapsedSeconds:F1}s] {e.Message}"));
+            var text = LocalLog.GetFormattedLogText();
+            TextLogsViewer.Text = text;
+            TextLogCount.Text = $"{LocalLog.Snapshot().Count} entries";
+
+            if (_autoScrollEnabled)
+            {
+                ScrollLogs.UpdateLayout();
+                ScrollLogs.ChangeView(null, ScrollLogs.ScrollableHeight, null, disableAnimation: false);
+            }
         });
     }
 
@@ -695,6 +739,18 @@ public sealed partial class MainWindow : Window
         NavIconRouting.Stroke = tabIndex == 1 ? accent : muted;
         NavIconLogs.Stroke = tabIndex == 2 ? accent : muted;
         NavIconAbout.Stroke = tabIndex == 3 ? accent : muted;
+
+        if (tabIndex == 2)
+        {
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                if (_autoScrollEnabled)
+                {
+                    ScrollLogs.UpdateLayout();
+                    ScrollLogs.ChangeView(null, ScrollLogs.ScrollableHeight, null, disableAnimation: true);
+                }
+            });
+        }
     }
 
     private void NavBtnConnect_Click(object sender, RoutedEventArgs e) => SelectTab(0);
@@ -779,20 +835,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void SwitchBypassDomestic_Toggled(object sender, RoutedEventArgs e)
+    private async void SwitchBypassDomestic_Toggled(object sender, RoutedEventArgs e)
     {
-        _controller.Routing.BypassDomestic = SwitchBypassDomestic.IsOn;
-        _controller.Settings.BypassDomestic = SwitchBypassDomestic.IsOn;
-        _controller.SaveCurrentSettings();
-        LocalLog.Add($"Bypass Domestic Sites set to: {SwitchBypassDomestic.IsOn}");
+        await _controller.SetBypassDomesticAsync(SwitchBypassDomestic.IsOn);
     }
 
-    private void SwitchBypassLan_Toggled(object sender, RoutedEventArgs e)
+    private async void SwitchBypassLan_Toggled(object sender, RoutedEventArgs e)
     {
-        _controller.Routing.BypassLan = SwitchBypassLan.IsOn;
-        _controller.Settings.BypassLan = SwitchBypassLan.IsOn;
-        _controller.SaveCurrentSettings();
-        LocalLog.Add($"Bypass Local Network set to: {SwitchBypassLan.IsOn}");
+        await _controller.SetBypassLanAsync(SwitchBypassLan.IsOn);
     }
 
     private void SwitchStartWithWindows_Toggled(object sender, RoutedEventArgs e)
@@ -802,7 +852,7 @@ public sealed partial class MainWindow : Window
         _controller.SaveCurrentSettings();
         StartupHelper.SetStartup(isEnabled);
         UpdateTrayIconState();
-        LocalLog.Add($"Start with Windows set to: {isEnabled}");
+        LocalLog.Info($"Start with Windows set to: {isEnabled}");
     }
 
     private void SwitchCloseToTray_Toggled(object sender, RoutedEventArgs e)
@@ -810,7 +860,7 @@ public sealed partial class MainWindow : Window
         _controller.Settings.CloseToTray = SwitchCloseToTray.IsOn;
         _controller.SaveCurrentSettings();
         UpdateTrayIconState();
-        LocalLog.Add($"Close to Tray set to: {SwitchCloseToTray.IsOn}");
+        LocalLog.Info($"Close to Tray set to: {SwitchCloseToTray.IsOn}");
     }
 
     private void SwitchMinimizeToTray_Toggled(object sender, RoutedEventArgs e)
@@ -818,31 +868,40 @@ public sealed partial class MainWindow : Window
         _controller.Settings.MinimizeToTray = SwitchMinimizeToTray.IsOn;
         _controller.SaveCurrentSettings();
         UpdateTrayIconState();
-        LocalLog.Add($"Minimize to Tray set to: {SwitchMinimizeToTray.IsOn}");
+        LocalLog.Info($"Minimize to Tray set to: {SwitchMinimizeToTray.IsOn}");
     }
 
-    private void BtnAddRule_Click(object sender, RoutedEventArgs e)
+    private async void BtnAddRule_Click(object sender, RoutedEventArgs e)
     {
-        var pattern = InputNewRulePattern.Text.Trim();
-        if (string.IsNullOrWhiteSpace(pattern)) return;
+        var rawPattern = InputNewRulePattern.Text.Trim();
+        if (string.IsNullOrWhiteSpace(rawPattern)) return;
 
-        var type = pattern.StartsWith("*.") ? RuleType.DomainSuffix : RuleType.DomainFull;
-        _controller.Routing.AddCustomRule(new RoutingRule(type, pattern.TrimStart('*', '.'), RuleAction.Direct));
-        _controller.SaveCurrentSettings();
+        var clean = rawPattern.TrimStart('*', '.');
+        if (clean.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || clean.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            if (Uri.TryCreate(clean, UriKind.Absolute, out var uri) && !string.IsNullOrWhiteSpace(uri.Host))
+            {
+                clean = uri.Host.TrimStart('*', '.');
+            }
+        }
+
+        var type = rawPattern.Contains('/') || (System.Net.IPAddress.TryParse(rawPattern, out _) && !rawPattern.Contains('*'))
+            ? RuleType.IpCidr
+            : RuleType.DomainSuffix;
+
+        var rule = new RoutingRule(type, clean, RuleAction.Direct);
+        await _controller.AddCustomRuleAsync(rule);
 
         InputNewRulePattern.Text = "";
         RefreshCustomRulesList();
-        LocalLog.Add($"Added custom direct bypass rule: {pattern}");
     }
 
     private void BtnDeleteRule_Click(object sender, RoutedEventArgs e)
     {
         if (sender is Button { Tag: RoutingRule rule })
         {
-            _controller.Routing.RemoveCustomRule(rule);
-            _controller.SaveCurrentSettings();
+            _controller.RemoveCustomRule(rule);
             RefreshCustomRulesList();
-            LocalLog.Add($"Removed rule: {rule.Pattern}");
         }
     }
 
@@ -859,17 +918,30 @@ public sealed partial class MainWindow : Window
 
     private async void BtnCopyLogs_Click(object sender, RoutedEventArgs e)
     {
-        var package = new DataPackage();
-        package.SetText(TextLogsViewer.Text);
-        Clipboard.SetContent(package);
-        BtnCopyLogs.Content = Strings.CopyLogsFeedback;
-        await Task.Delay(1500);
-        BtnCopyLogs.Content = Strings.CopyLogsAction;
+        try
+        {
+            var text = LocalLog.GetFormattedLogText();
+            if (!string.IsNullOrEmpty(text))
+            {
+                var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };
+                package.SetText(text);
+                Clipboard.SetContent(package);
+                try { Clipboard.Flush(); } catch { }
+            }
+            BtnCopyLogs.Content = Strings.CopyLogsFeedback;
+            await Task.Delay(1500).ConfigureAwait(true);
+            BtnCopyLogs.Content = Strings.CopyLogsAction;
+        }
+        catch (Exception ex)
+        {
+            LocalLog.Error($"Copy failed: {ex.Message}");
+        }
     }
 
     private void BtnClearLogs_Click(object sender, RoutedEventArgs e)
     {
         LocalLog.Clear();
+        TextLogsViewer.Text = "";
     }
 
     private void BtnOpenGithub_Click(object sender, RoutedEventArgs e)

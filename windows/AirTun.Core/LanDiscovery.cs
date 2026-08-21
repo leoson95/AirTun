@@ -165,7 +165,6 @@ public sealed class LanDiscovery : IDisposable
             catch (SocketException) { continue; }
 
             var from = result.RemoteEndPoint.Address.ToString();
-            DiagnosticLog?.Invoke($"[Discovery] UDP {result.Buffer.Length}b from {from}");
             Observe(result.Buffer, from);
             Expire();
         }
@@ -175,10 +174,8 @@ public sealed class LanDiscovery : IDisposable
     {
         if (!TryParseBeacon(datagram, _clock(), senderIp, out var device))
         {
-            DiagnosticLog?.Invoke($"[Discovery] Parse failed from {senderIp}");
             return false;
         }
-        DiagnosticLog?.Invoke($"[Discovery] Found: {device!.DeviceName} @ {device.Host}:{device.PortNumber} PIN={device.Pin}");
         Add(device!);
         return true;
     }
@@ -219,8 +216,6 @@ public sealed class LanDiscovery : IDisposable
             // Ignore local machine's own IP addresses so the PC never discovers itself
             if (IsLocalMachineAddress(host)) return false;
 
-
-
             device = new Device(
                 Host: host,
                 PortNumber: portNumber,
@@ -239,13 +234,17 @@ public sealed class LanDiscovery : IDisposable
 
     private void Add(Device device)
     {
-        bool changed;
+        bool isNew;
         lock (_lock)
         {
-            changed = !_devices.TryGetValue(device.Key, out var known) || !SameToUser(known, device);
+            isNew = !_devices.TryGetValue(device.Key, out var known) || !SameToUser(known, device);
             _devices[device.Key] = device;
         }
-        if (changed) Notify();
+        if (isNew)
+        {
+            DiagnosticLog?.Invoke($"[DISCOVERY] Discovered device: {device.DeviceName} ({device.Host}:{device.PortNumber})");
+            Notify();
+        }
     }
 
     private static bool IsLocalMachineAddress(string ip)

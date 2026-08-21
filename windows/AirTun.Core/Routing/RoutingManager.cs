@@ -1,5 +1,5 @@
-using System.Collections.Concurrent;
-using System.Text.Json;
+using System.Net;
+using System.Net.Sockets;
 
 namespace AirTun.Core.Routing;
 
@@ -20,6 +20,7 @@ public sealed class RoutingManager
         new(RuleType.DomainSuffix, "divar.ir", RuleAction.Direct, "Divar"),
         new(RuleType.DomainSuffix, "torob.com", RuleAction.Direct, "Torob"),
         new(RuleType.DomainSuffix, "varzesh3.com", RuleAction.Direct, "Varzesh3"),
+        new(RuleType.DomainSuffix, "soft98.ir", RuleAction.Direct, "Soft98 Software Portal"),
         new(RuleType.DomainSuffix, "cafebazaar.ir", RuleAction.Direct, "CafeBazaar"),
         new(RuleType.DomainSuffix, "tamin.ir", RuleAction.Direct, "Tamin Ejtemaei"),
         new(RuleType.DomainSuffix, "my.gov.ir", RuleAction.Direct, "National Government Services"),
@@ -49,22 +50,38 @@ public sealed class RoutingManager
     {
         if (string.IsNullOrWhiteSpace(hostOrIp)) return RuleAction.Proxy;
 
+        var target = hostOrIp.Trim();
+
+        // 1. Custom rules have the highest priority
         foreach (var rule in CustomRules.Where(r => r.Enabled))
         {
-            if (rule.Matches(hostOrIp))
+            if (rule.Matches(target))
             {
                 return rule.Action;
             }
         }
 
+        // 2. LAN bypass check
+        if (BypassLan && IsLanHostOrIp(target))
+        {
+            return RuleAction.Direct;
+        }
+
+        // 3. Domestic Iran bypass check
         if (BypassDomestic)
         {
             foreach (var rule in _builtInIranRules)
             {
-                if (rule.Matches(hostOrIp))
+                if (rule.Matches(target))
                 {
                     return RuleAction.Direct;
                 }
+            }
+
+            // Check if it is an Iranian GeoIP CIDR
+            if (IPAddress.TryParse(target, out _) && IranGeoIp.IsIranIp(target))
+            {
+                return RuleAction.Direct;
             }
         }
 
@@ -100,6 +117,7 @@ public sealed class RoutingManager
             entries.Add("172.24.*"); entries.Add("172.25.*"); entries.Add("172.26.*"); entries.Add("172.27.*");
             entries.Add("172.28.*"); entries.Add("172.29.*"); entries.Add("172.30.*"); entries.Add("172.31.*");
             entries.Add("192.168.*");
+            entries.Add("169.254.*");
         }
 
         if (BypassDomestic)
@@ -128,5 +146,38 @@ public sealed class RoutingManager
         }
 
         return string.Join(";", entries);
+    }
+
+    public static bool IsLanHostOrIp(string hostOrIp)
+    {
+        if (string.IsNullOrWhiteSpace(hostOrIp)) return false;
+        var clean = hostOrIp.Trim();
+
+        if (string.Equals(clean, "<local>", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(clean, "localhost", StringComparison.OrdinalIgnoreCase) ||
+            clean.EndsWith(".local", StringComparison.OrdinalIgnoreCase) ||
+            clean.EndsWith(".lan", StringComparison.OrdinalIgnoreCase) ||
+            clean.EndsWith(".home.arpa", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (IPAddress.TryParse(clean, out var ip))
+        {
+            if (ip.AddressFamily == AddressFamily.InterNetwork)
+            {
+                var bytes = ip.GetAddressBytes();
+                if (bytes[0] == 10) return true; // 10.0.0.0/8
+                if (bytes[0] == 127) return true; // 127.0.0.0/8
+                if (bytes[0] == 172 && bytes[1] >= 16 && bytes[1] <= 31) return true; // 172.16.0.0/12
+                if (bytes[0] == 192 && bytes[1] == 168) return true; // 192.168.0.0/16
+                if (bytes[0] == 169 && bytes[1] == 254) return true; // 169.254.0.0/16
+            }
+            else if (ip.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                if (IPAddress.IsLoopback(ip) || ip.IsIPv6LinkLocal || ip.IsIPv6SiteLocal)
+                    return true;
+            }
+        }
+
+        return false;
     }
 }
